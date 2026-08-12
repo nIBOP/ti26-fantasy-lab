@@ -16,6 +16,44 @@
   const fmt = (value, digits = 2) => value == null || Number.isNaN(Number(value)) ? "—" : Number(value).toLocaleString("ru-RU", {minimumFractionDigits: digits, maximumFractionDigits: digits});
   const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 
+  function renderDailyForecast() {
+    if (!data.daily) return;
+    $("daily-fixtures").innerHTML = data.daily.fixtures.map(f => {
+      const p = Number(f.team_a_map_win_probability);
+      const favorite = p >= .5 ? f.team_a : f.team_b;
+      const favoriteP = Math.max(p, 1 - p);
+      return `<article class="fixture-card">
+        <span>${esc(f.time)}</span>
+        <strong>${esc(f.team_a)} <i>—</i> ${esc(f.team_b)}</strong>
+        <small>Фаворит: ${esc(favorite)} · ${fmt(favoriteP * 100, 0)}% за карту</small>
+        <div class="probability"><b style="width:${p * 100}%"></b></div>
+        <small>3 карты: ${fmt(Number(f.three_map_probability) * 100, 0)}% · ${fmt(f.expected_duration_minutes, 1)} мин</small>
+      </article>`;
+    }).join("");
+
+    const roles = [["core", "Коры 1/3"], ["mid", "Мидеры"], ["support", "Саппорты 4/5"]];
+    $("daily-role-leaders").innerHTML = roles.map(([role, label]) => {
+      const rows = data.daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
+      return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
+        <div class="daily-player">
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}</small></span>
+          <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
+        </div>`).join("")}</div>`;
+    }).join("");
+
+    const best = data.daily.lineups[0];
+    const alternatives = data.daily.lineups.slice(1, 5);
+    $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
+      <div class="lineup-total"><span>Прогноз</span><strong>${fmt(best.projected_day_total)}</strong><small>Δ матча ${Number(best.matchup_delta) >= 0 ? "+" : ""}${fmt(best.matchup_delta)}</small></div>
+      <dl>
+        <div><dt>Коры · ${esc(best.core_team)}</dt><dd>${esc(best.cores)}</dd></div>
+        <div><dt>Мидер · ${esc(best.mid_team)}</dt><dd>${esc(best.mid)}</dd></div>
+        <div><dt>Саппорты · ${esc(best.support_team)}</dt><dd>${esc(best.supports)}</dd></div>
+      </dl>
+    </article>
+    <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.core_team)} / ${esc(x.mid)} / ${esc(x.support_team)}</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
+  }
+
   function rankingRows() {
     const query = state.search.trim().toLocaleLowerCase("ru");
     const rows = data.rankings.filter(r => inCurrentCategory(r) && (!query || `${r.player_name} ${r.team}`.toLocaleLowerCase("ru").includes(query)));
@@ -126,6 +164,7 @@
   $("roster-checked").textContent = data.meta.rosterChecked;
   $("map-count").textContent = Number(data.meta.playerMapObservations).toLocaleString("ru-RU");
   $("formula-list").innerHTML = formulas.map(f => `<li>${f}</li>`).join("");
+  renderDailyForecast();
   $("search").addEventListener("input", e => {state.search = e.target.value; render();});
   $("sort-select").addEventListener("change", e => {state.sort = e.target.value; render();});
   $("metric-select").addEventListener("change", e => {state.metric = e.target.value; renderExplorer();});
