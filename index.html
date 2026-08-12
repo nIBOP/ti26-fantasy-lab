@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>TI 2026 Fantasy Lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <header class="hero shell">
+    <div>
+      <p class="eyebrow">DOTA 2 · THE INTERNATIONAL 2026</p>
+      <h1>Fantasy Lab</h1>
+      <p class="hero-copy">Рейтинг игроков и ценность аспектов по групповой статистике Tier-1.</p>
+    </div>
+    <div class="hero-meta">
+      <span>Данные до <strong id="data-cutoff">—</strong></span>
+      <span>Составы проверены <strong id="roster-checked">—</strong></span>
+      <span><strong id="map-count">—</strong> player-map наблюдений</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="notice" aria-label="Ограничение данных">
+      <span class="notice-icon">!</span>
+      <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. TI уже добавлен как новая лига, но завершённых карт в API пока нет.</p>
+    </section>
+
+    <section class="controls panel">
+      <div>
+        <span class="control-label">Категория</span>
+        <div class="position-tabs" id="position-tabs" role="tablist"></div>
+      </div>
+      <label class="search-field">
+        <span class="control-label">Найти игрока или команду</span>
+        <input id="search" type="search" placeholder="Например, Yatoro или Spirit" autocomplete="off">
+      </label>
+      <label class="sort-field">
+        <span class="control-label">Сортировка</span>
+        <select id="sort-select">
+          <option value="model">Надёжный рейтинг</option>
+          <option value="mean">Среднее за карту</option>
+          <option value="p75">Верхний квартиль</option>
+          <option value="sample">Размер выборки</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="leaders" id="leaders" aria-label="Лидеры позиции"></section>
+
+    <section class="workspace">
+      <article class="panel ranking-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">РЕЙТИНГ ПОЗИЦИИ</p>
+            <h2 id="ranking-title">—</h2>
+          </div>
+          <span class="result-count" id="result-count">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Игрок</th>
+                <th>Карт</th>
+                <th>База</th>
+                <th>Аспекты</th>
+                <th>Итого</th>
+                <th>p75</th>
+                <th>Лучший аспект</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="panel player-panel" id="player-panel">
+        <div class="empty-state" id="player-empty">
+          <div class="empty-glyph">✦</div>
+          <h3>Выберите игрока</h3>
+          <p>Нажмите на строку рейтинга, чтобы увидеть все показатели и вклад аспектов.</p>
+        </div>
+        <div id="player-content" hidden>
+          <div class="player-head">
+            <div>
+              <p class="eyebrow" id="player-position">—</p>
+              <h2 id="player-name">—</h2>
+              <p id="player-team">—</p>
+            </div>
+            <button id="close-player" class="icon-button" aria-label="Закрыть карточку">×</button>
+          </div>
+          <div class="score-strip">
+            <div><span>Итого</span><strong id="player-total">—</strong></div>
+            <div><span>Бонус</span><strong id="player-bonus">—</strong></div>
+            <div><span>p75</span><strong id="player-p75">—</strong></div>
+          </div>
+          <div class="aspect-callout">
+            <span>Самый ценный аспект</span>
+            <strong id="player-best-aspect">—</strong>
+          </div>
+          <div class="metric-list" id="player-metrics"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel aspect-explorer">
+      <div class="section-heading explorer-heading">
+        <div>
+          <p class="eyebrow">РАЗБОР ПОКАЗАТЕЛЕЙ</p>
+          <h2>Кто лучший в каждом аспекте</h2>
+        </div>
+        <label>
+          <span class="control-label">Показатель</span>
+          <select id="metric-select"></select>
+        </label>
+      </div>
+      <div class="metric-summary" id="metric-summary"></div>
+      <div class="bar-chart" id="metric-chart"></div>
+    </section>
+
+    <details class="panel methodology">
+      <summary>Формула и методика расчёта</summary>
+      <div class="method-grid">
+        <div>
+          <h3>Формула</h3>
+          <ul id="formula-list"></ul>
+        </div>
+        <div>
+          <h3>Как построен рейтинг</h3>
+          <p>Используются только групповые стадии Tier-1. <strong>Итог игрока = сумма базовых очков всех доступных показателей + прирост от модификаторов активных аспектов.</strong></p>
+          <p>Коры позиций 1/3 сравниваются вместе, саппорты позиций 4/5 — вместе, мидеры отдельно.</p>
+          <p>Для сортировки по умолчанию среднее игрока немного усаживается к среднему своей категории с коэффициентом <code>n / (n + 20)</code>. Это защищает рейтинг от случайных лидеров на 10 картах.</p>
+          <p>p75 — хорошая, но не экстремальная карта: в 25% игр результат был выше.</p>
+        </div>
+      </div>
+    </details>
+  </main>
+
+  <footer class="shell">TI 2026 Fantasy Lab · локальный аналитический dashboard</footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
