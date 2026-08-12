@@ -59,6 +59,10 @@ h3 { margin-bottom: 8px; }
 .fixture-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .fixture-card i { color: var(--muted); font-style: normal; }
 .fixture-card small { color: var(--muted); font-size: 10px; }
+.fixture-card small.confidence { width: max-content; padding: 2px 6px; border-radius: 999px; font-weight: 800; }
+.confidence-high { color: var(--green) !important; background: rgba(99,194,140,.1); }
+.confidence-medium { color: var(--gold-soft) !important; background: rgba(233,184,76,.09); }
+.confidence-low { color: var(--red) !important; background: rgba(244,119,98,.09); }
 .probability { height: 4px; overflow: hidden; border-radius: 999px; background: #453c2e; }
 .probability b { display: block; height: 100%; background: linear-gradient(90deg, #d39b37, var(--gold-soft)); }
 .daily-grid { display: grid; grid-template-columns: 1.35fr .85fr; border-top: 1px solid var(--line); }

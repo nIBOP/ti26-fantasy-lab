@@ -28,6 +28,7 @@
         <small>Фаворит: ${esc(favorite)} · ${fmt(favoriteP * 100, 0)}% за карту</small>
         <div class="probability"><b style="width:${p * 100}%"></b></div>
         <small>3 карты: ${fmt(Number(f.three_map_probability) * 100, 0)}% · ${fmt(f.expected_duration_minutes, 1)} мин</small>
+        <small class="confidence confidence-${f.confidence === "высокая" ? "high" : f.confidence === "средняя" ? "medium" : "low"}">Уверенность графа: ${esc(f.confidence)}</small>
       </article>`;
     }).join("");
 
