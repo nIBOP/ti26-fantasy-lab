@@ -20,6 +20,10 @@
     if (!data.daily) return;
     $("active-day-label").textContent = `Матчи ${data.daily.date.replace(" 2026", "")}`;
     $("daily-title").textContent = `Кого выбрать на игровой день ${data.daily.date.replace(" 2026", "")}`;
+    if (data.daily.status === "active") {
+      $("hero-day-copy").textContent = "Подбор команды на текущий игровой день — по официальным Swiss-парам Liquipedia.";
+      $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${data.daily.date.toLocaleUpperCase("ru")}`;
+    }
     if (data.daily.status === "not_published") {
       $("hero-day-copy").textContent = "Liquipedia ещё не опубликовала Swiss-пары следующего раунда. Прогноз временно скрыт, чтобы не показывать устаревшие матчи.";
       $("daily-eyebrow").textContent = `РАСПИСАНИЕ ${data.daily.date.toLocaleUpperCase("ru")} ЕЩЁ НЕ ОПУБЛИКОВАНО`;
