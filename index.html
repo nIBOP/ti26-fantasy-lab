@@ -14,8 +14,8 @@
     <div>
       <p class="eyebrow">DOTA 2 · THE INTERNATIONAL 2026</p>
       <h1>Fantasy Lab</h1>
-      <div class="active-day"><span>АКТИВНЫЙ ПРОГНОЗ</span><strong>Матчи 13 августа</strong></div>
-      <p class="hero-copy">Подбор команды на один игровой день — с учётом конкретных пар соперников 13 августа.</p>
+      <div class="active-day"><span>СЛЕДУЮЩИЙ ИГРОВОЙ ДЕНЬ</span><strong id="active-day-label">14 августа</strong></div>
+      <p class="hero-copy" id="hero-day-copy">Подбор команды на один игровой день — после публикации официальных Swiss-пар.</p>
     </div>
     <div class="hero-meta">
       <span>Данные до <strong id="data-cutoff">—</strong></span>
@@ -33,16 +33,17 @@
     <section class="panel daily-forecast">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">ПРОГНОЗ ТОЛЬКО НА МАТЧИ 13 АВГУСТА</p>
-          <h2>Кого выбрать на игровой день 13 августа</h2>
+          <p class="eyebrow" id="daily-eyebrow">ПРОГНОЗ НА СЛЕДУЮЩИЙ ИГРОВОЙ ДЕНЬ</p>
+          <h2 id="daily-title">Кого выбрать 14 августа</h2>
         </div>
         <span class="model-chip">Bo3 · две лучшие карты</span>
       </div>
-      <div class="daily-copy">
+      <div class="daily-copy" id="daily-copy">
         Это не универсальный рейтинг на любой день. Исторический результат игрока скорректирован именно под пары 13 августа: на силу соперника, ожидаемую длительность карты,
         вероятность победы и fantasy-allowance соперника. Сила рассчитана по общей сети из 887 карт и 46 команд: общие соперники связывают команды даже без очной встречи.
         Игроки с менее чем 20 картами Tier-1 не входят в рекомендации.
       </div>
+      <div class="schedule-pending" id="schedule-pending" hidden></div>
       <div class="fixture-grid" id="daily-fixtures"></div>
       <div class="daily-grid">
         <div class="daily-column">

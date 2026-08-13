@@ -18,6 +18,18 @@
 
   function renderDailyForecast() {
     if (!data.daily) return;
+    $("active-day-label").textContent = `Матчи ${data.daily.date.replace(" 2026", "")}`;
+    $("daily-title").textContent = `Кого выбрать на игровой день ${data.daily.date.replace(" 2026", "")}`;
+    if (data.daily.status === "not_published") {
+      $("hero-day-copy").textContent = "Liquipedia ещё не опубликовала Swiss-пары следующего раунда. Прогноз временно скрыт, чтобы не показывать устаревшие матчи.";
+      $("daily-eyebrow").textContent = `РАСПИСАНИЕ ${data.daily.date.toLocaleUpperCase("ru")} ЕЩЁ НЕ ОПУБЛИКОВАНО`;
+      $("daily-copy").hidden = true;
+      $("schedule-pending").hidden = false;
+      $("schedule-pending").innerHTML = `<strong>Ожидаем официальные пары Swiss</strong><p>В исходнике Liquipedia сейчас нет заполненных матчей на ${esc(data.daily.date)}. Рекомендации за 13 августа убраны. После появления пар страницу нужно пересчитать — угадывать соперников по результатам предыдущего раунда мы не будем.</p><a href="${esc(data.daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
+      $("daily-fixtures").hidden = true;
+      document.querySelector(".daily-grid").hidden = true;
+      return;
+    }
     $("daily-fixtures").innerHTML = data.daily.fixtures.map(f => {
       const p = Number(f.team_a_map_win_probability);
       const favorite = p >= .5 ? f.team_a : f.team_b;

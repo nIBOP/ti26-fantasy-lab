@@ -14,6 +14,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
@@ -53,6 +54,10 @@ h3 { margin-bottom: 8px; }
 .daily-forecast { margin-bottom: 18px; overflow: hidden; }
 .model-chip { padding: 6px 10px; border: 1px solid rgba(233,184,76,.25); border-radius: 999px; color: var(--gold-soft); background: rgba(233,184,76,.07); font-size: 11px; font-weight: 800; }
 .daily-copy { padding: 16px 24px 4px; color: var(--muted); }
+.schedule-pending { margin: 20px 24px 26px; padding: 22px; border: 1px dashed rgba(233,184,76,.4); border-radius: 14px; background: rgba(233,184,76,.06); }
+.schedule-pending strong { color: var(--gold-soft); font: 700 22px Georgia, serif; }
+.schedule-pending p { max-width: 850px; margin: 8px 0 12px; color: var(--muted); }
+.schedule-pending a { color: var(--gold); font-weight: 800; text-decoration: none; }
 .fixture-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 16px 24px 22px; }
 .fixture-card { display: grid; gap: 7px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: rgba(0,0,0,.14); }
 .fixture-card > span { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .08em; }
