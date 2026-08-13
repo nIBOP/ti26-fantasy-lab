@@ -43,6 +43,13 @@ h3 { margin-bottom: 8px; }
 .active-day { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0 13px; padding: 7px 11px; border: 1px solid rgba(233,184,76,.38); border-radius: 8px; background: rgba(233,184,76,.1); }
 .active-day span { color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .12em; }
 .active-day strong { color: var(--gold-soft); }
+.day-switch { display: flex; gap: 7px; margin: 0 0 13px; }
+.day-button { display: grid; min-width: 145px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); text-align: left; background: #171510; }
+.day-button strong, .day-button span { display: block; }
+.day-button strong { color: var(--text); font-size: 12px; }
+.day-button span { font-size: 9px; }
+.day-button.active { border-color: var(--gold); background: rgba(233,184,76,.13); }
+.day-button.active strong { color: var(--gold-soft); }
 .hero-meta { display: grid; gap: 8px; min-width: 260px; padding-bottom: 8px; color: var(--muted); text-align: right; }
 .hero-meta strong { color: var(--text); }
 

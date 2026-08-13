@@ -1,5 +1,6 @@
 (() => {
   const data = window.FANTASY_DATA;
+  let selectedDay = data.daily;
   const categoryNames = {core: "Коры", mid: "Мидер", support: "Поддержка"};
   const positionNames = {1: "Керри", 2: "Мидер", 3: "Оффлейнер", 4: "Поддержка", 5: "Поддержка"};
   const formulas = [
@@ -17,24 +18,34 @@
   const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 
   function renderDailyForecast() {
-    if (!data.daily) return;
-    $("active-day-label").textContent = `Матчи ${data.daily.date.replace(" 2026", "")}`;
-    $("daily-title").textContent = `Кого выбрать на игровой день ${data.daily.date.replace(" 2026", "")}`;
-    if (data.daily.status === "active") {
+    const daily = selectedDay;
+    if (!daily) return;
+    $("day-switch").innerHTML = (data.matchdays || [daily]).map(day => `<button class="day-button ${day.dateKey === daily.dateKey ? "active" : ""}" data-day="${esc(day.dateKey)}"><strong>${esc(day.date.replace(" 2026", ""))}</strong><span>${day.status === "not_published" ? "ожидаем пары" : "прогноз готов"}</span></button>`).join("");
+    document.querySelectorAll(".day-button").forEach(button => button.addEventListener("click", () => {
+      selectedDay = data.matchdays.find(day => day.dateKey === button.dataset.day) || daily;
+      renderDailyForecast();
+    }));
+    $("active-day-label").textContent = `Матчи ${daily.date.replace(" 2026", "")}`;
+    $("daily-title").textContent = `Кого выбрать на игровой день ${daily.date.replace(" 2026", "")}`;
+    $("daily-copy").hidden = false;
+    $("schedule-pending").hidden = true;
+    $("daily-fixtures").hidden = false;
+    document.querySelector(".daily-grid").hidden = false;
+    if (daily.status === "active") {
       $("hero-day-copy").textContent = "Подбор команды на текущий игровой день — по официальным Swiss-парам Liquipedia.";
-      $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${data.daily.date.toLocaleUpperCase("ru")}`;
+      $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
-    if (data.daily.status === "not_published") {
+    if (daily.status === "not_published") {
       $("hero-day-copy").textContent = "Liquipedia ещё не опубликовала Swiss-пары следующего раунда. Прогноз временно скрыт, чтобы не показывать устаревшие матчи.";
-      $("daily-eyebrow").textContent = `РАСПИСАНИЕ ${data.daily.date.toLocaleUpperCase("ru")} ЕЩЁ НЕ ОПУБЛИКОВАНО`;
+      $("daily-eyebrow").textContent = `РАСПИСАНИЕ ${daily.date.toLocaleUpperCase("ru")} ЕЩЁ НЕ ОПУБЛИКОВАНО`;
       $("daily-copy").hidden = true;
       $("schedule-pending").hidden = false;
-      $("schedule-pending").innerHTML = `<strong>Ожидаем официальные пары Swiss</strong><p>В исходнике Liquipedia сейчас нет заполненных матчей на ${esc(data.daily.date)}. Рекомендации за 13 августа убраны. После появления пар страницу нужно пересчитать — угадывать соперников по результатам предыдущего раунда мы не будем.</p><a href="${esc(data.daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
+      $("schedule-pending").innerHTML = `<strong>Ожидаем официальные пары Swiss</strong><p>В исходнике Liquipedia сейчас нет полного расписания на ${esc(daily.date)}. После появления пар страницу нужно пересчитать — переносить рекомендации с другого дня мы не будем.</p><a href="${esc(daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
       $("daily-fixtures").hidden = true;
       document.querySelector(".daily-grid").hidden = true;
       return;
     }
-    $("daily-fixtures").innerHTML = data.daily.fixtures.map(f => {
+    $("daily-fixtures").innerHTML = daily.fixtures.map(f => {
       const p = Number(f.team_a_map_win_probability);
       const favorite = p >= .5 ? f.team_a : f.team_b;
       const favoriteP = Math.max(p, 1 - p);
@@ -50,7 +61,7 @@
 
     const roles = [["core", "Коры 1/3"], ["mid", "Мидеры"], ["support", "Саппорты 4/5"]];
     $("daily-role-leaders").innerHTML = roles.map(([role, label]) => {
-      const rows = data.daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
+      const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
           <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}</small></span>
@@ -58,8 +69,8 @@
         </div>`).join("")}</div>`;
     }).join("");
 
-    const best = data.daily.lineups[0];
-    const alternatives = data.daily.lineups.slice(1, 5);
+    const best = daily.lineups[0];
+    const alternatives = daily.lineups.slice(1, 5);
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
       <div class="lineup-total"><span>Прогноз</span><strong>${fmt(best.projected_day_total)}</strong><small>Δ матча ${Number(best.matchup_delta) >= 0 ? "+" : ""}${fmt(best.matchup_delta)}</small></div>
       <dl>
