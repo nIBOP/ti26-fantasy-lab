@@ -16,6 +16,10 @@
   const $ = (id) => document.getElementById(id);
   const fmt = (value, digits = 2) => value == null || Number.isNaN(Number(value)) ? "—" : Number(value).toLocaleString("ru-RU", {minimumFractionDigits: digits, maximumFractionDigits: digits});
   const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  const aspectText = (player, detailed = false) => (player?.aspects || []).map(a => {
+    const value = detailed && a.historicalBonusPerMap != null ? ` · +${fmt(a.historicalBonusPerMap)}/карта` : "";
+    return `${a.name} +${a.bonusPct}%${value}`;
+  }).join(" · ");
 
   function renderDailyForecast() {
     const daily = selectedDay;
@@ -70,19 +74,22 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${p.series_count} матча` : ""}</small></span>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${p.series_count} матча` : ""}</small><small class="daily-aspects">${esc(aspectText(p))}</small></span>
           <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
         </div>`).join("")}</div>`;
     }).join("");
 
     const best = daily.lineups[0];
     const alternatives = daily.lineups.slice(1, 5);
+    const byName = new Map(daily.players.map(p => [p.player_name, p]));
+    const names = value => String(value || "").split("+").map(x => x.trim());
+    const lineupAspects = value => names(value).map(name => `${name}: ${aspectText(byName.get(name), true)}`).join("; ");
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
       <div class="lineup-total"><span>Прогноз</span><strong>${fmt(best.projected_day_total)}</strong><small>Δ матча ${Number(best.matchup_delta) >= 0 ? "+" : ""}${fmt(best.matchup_delta)}</small></div>
       <dl>
-        <div><dt>Коры · ${esc(best.core_teams)}</dt><dd>${esc(best.cores)}</dd></div>
-        <div><dt>Мидер · ${esc(best.mid_team)}</dt><dd>${esc(best.mid)}</dd></div>
-        <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd></div>
+        <div><dt>Коры · ${esc(best.core_teams)}</dt><dd>${esc(best.cores)}</dd><small>${esc(lineupAspects(best.cores))}</small></div>
+        <div><dt>Мидер · ${esc(best.mid_team)}</dt><dd>${esc(best.mid)}</dd><small>${esc(lineupAspects(best.mid))}</small></div>
+        <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd><small>${esc(lineupAspects(best.supports))}</small></div>
       </dl>
     </article>
     <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)}</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
