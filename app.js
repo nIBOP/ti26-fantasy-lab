@@ -20,6 +20,9 @@
     const value = detailed && a.historicalBonusPerMap != null ? ` · +${fmt(a.historicalBonusPerMap)}/карта` : "";
     return `${a.name} +${a.bonusPct}%${value}`;
   }).join(" · ");
+  const aspectChoice = player => player?.recommendedAspect
+    ? `Выбирать: ${player.recommendedAspect}${player.recommendedAspectPreliminary ? "*" : ""}`
+    : "Выбор пока не определён";
 
   function renderDailyForecast() {
     const daily = selectedDay;
@@ -74,7 +77,7 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${p.series_count} матча` : ""}</small><small class="daily-aspects">${esc(aspectText(p))}</small></span>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${p.series_count} матча` : ""}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
           <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
         </div>`).join("")}</div>`;
     }).join("");
@@ -83,7 +86,10 @@
     const alternatives = daily.lineups.slice(1, 5);
     const byName = new Map(daily.players.map(p => [p.player_name, p]));
     const names = value => String(value || "").split("+").map(x => x.trim());
-    const lineupAspects = value => names(value).map(name => `${name}: ${aspectText(byName.get(name), true)}`).join("; ");
+    const lineupAspects = value => names(value).map(name => {
+      const player = byName.get(name);
+      return `${name} — ${aspectChoice(player)} (${player?.recommendedAspectReason || "нет данных"})`;
+    }).join("; ");
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
       <div class="lineup-total"><span>Прогноз</span><strong>${fmt(best.projected_day_total)}</strong><small>Δ матча ${Number(best.matchup_delta) >= 0 ? "+" : ""}${fmt(best.matchup_delta)}</small></div>
       <dl>
@@ -92,6 +98,7 @@
         <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd><small>${esc(lineupAspects(best.supports))}</small></div>
       </dl>
     </article>
+    <p class="aspect-warning">* Для саппортов рекомендация предварительная: Визионер выбран по измеренным observer wards; статистики смотрителей для проверки Фотографа пока нет.</p>
     <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)}</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
   }
 

@@ -89,6 +89,7 @@ h3 { margin-bottom: 8px; }
 .daily-player span strong, .daily-player span small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .daily-player span small, .daily-player em small { color: var(--muted); font-size: 9px; }
 .daily-player span small.daily-aspects { color: var(--gold-soft); margin-top: 2px; }
+.daily-player span small.daily-aspects strong { display: inline; color: #fff0b8; }
 .daily-player em { color: var(--text); text-align: right; font-style: normal; font-weight: 800; }
 .daily-player em small.positive { color: var(--green); }
 .daily-player em small.negative { color: var(--red); }
@@ -102,6 +103,7 @@ h3 { margin-bottom: 8px; }
 .lineup-card dt { color: var(--muted); font-size: 10px; }
 .lineup-card dd { margin: 1px 0 0; font-weight: 800; }
 .lineup-card dl small { display: block; margin-top: 2px; color: var(--gold-soft); font-size: 10px; line-height: 1.35; }
+.aspect-warning { margin: 9px 2px 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .alternative-list { margin-top: 18px; }
 .alternative-list > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid rgba(239,207,125,.07); color: var(--muted); font-size: 11px; }
 .alternative-list strong { color: var(--text); }
