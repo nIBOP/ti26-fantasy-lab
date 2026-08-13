@@ -20,7 +20,7 @@
   function renderDailyForecast() {
     const daily = selectedDay;
     if (!daily) return;
-    $("day-switch").innerHTML = (data.matchdays || [daily]).map(day => `<button class="day-button ${day.dateKey === daily.dateKey ? "active" : ""}" data-day="${esc(day.dateKey)}"><strong>${esc(day.date.replace(" 2026", ""))}</strong><span>${day.status === "not_published" ? "ожидаем пары" : "прогноз готов"}</span></button>`).join("");
+    $("day-switch").innerHTML = (data.matchdays || [daily]).map(day => `<button class="day-button ${day.dateKey === daily.dateKey ? "active" : ""}" data-day="${esc(day.dateKey)}"><strong>${esc(day.date.replace(" 2026", ""))}</strong><span>${day.status === "not_published" ? "ожидаем пары" : day.status === "active_partial" ? "8 пар + поздний раунд" : day.status === "historical" ? "завершён" : "прогноз готов"}</span></button>`).join("");
     document.querySelectorAll(".day-button").forEach(button => button.addEventListener("click", () => {
       selectedDay = data.matchdays.find(day => day.dateKey === button.dataset.day) || daily;
       renderDailyForecast();
@@ -34,6 +34,12 @@
     if (daily.status === "active") {
       $("hero-day-copy").textContent = "Подбор команды на текущий игровой день — по официальным Swiss-парам Liquipedia.";
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
+    }
+    if (daily.status === "active_partial") {
+      $("hero-day-copy").textContent = "Прогноз на завтра учитывает восемь опубликованных серий и гарантированный второй матч команд утреннего блока.";
+      $("daily-eyebrow").textContent = `ПРОГНОЗ НА ${daily.date.toLocaleUpperCase("ru")} · ПОСЛЕ 29 КАРТ 13 АВГУСТА`;
+      $("schedule-pending").hidden = false;
+      $("schedule-pending").innerHTML = `<strong>Поздний Swiss-раунд ещё условный</strong><p>Liquipedia опубликовала ${daily.publishedFixtures} ранних пар и ${daily.pendingSlots} пустых слота на 16:00 CST. Команды утреннего блока сыграют дважды; пока соперники второго матча неизвестны, модель усредняет допустимые Swiss-матчапы.</p><a href="${esc(daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
     }
     if (daily.status === "not_published") {
       $("hero-day-copy").textContent = "Liquipedia ещё не опубликовала Swiss-пары следующего раунда. Прогноз временно скрыт, чтобы не показывать устаревшие матчи.";
@@ -64,8 +70,8 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}</small></span>
-          <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)} · выбор ${fmt(Number(p.selection_probability) * 100, 0)}%</small></em>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${p.series_count} матча` : ""}</small></span>
+          <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
         </div>`).join("")}</div>`;
     }).join("");
 
