@@ -74,12 +74,12 @@
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
       <div class="lineup-total"><span>Прогноз</span><strong>${fmt(best.projected_day_total)}</strong><small>Δ матча ${Number(best.matchup_delta) >= 0 ? "+" : ""}${fmt(best.matchup_delta)}</small></div>
       <dl>
-        <div><dt>Коры · ${esc(best.core_team)}</dt><dd>${esc(best.cores)}</dd></div>
+        <div><dt>Коры · ${esc(best.core_teams)}</dt><dd>${esc(best.cores)}</dd></div>
         <div><dt>Мидер · ${esc(best.mid_team)}</dt><dd>${esc(best.mid)}</dd></div>
-        <div><dt>Саппорты · ${esc(best.support_team)}</dt><dd>${esc(best.supports)}</dd></div>
+        <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd></div>
       </dl>
     </article>
-    <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.core_team)} / ${esc(x.mid)} / ${esc(x.support_team)}</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
+    <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)}</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
   }
 
   function rankingRows() {
