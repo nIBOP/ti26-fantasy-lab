@@ -50,7 +50,7 @@
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
     if (daily.status === "active_partial") {
-      $("hero-day-copy").textContent = "Прогноз учитывает точные пары четвёртого раунда и вероятностные выходы команд в пятый раунд Swiss.";
+      $("hero-day-copy").textContent = `Прогноз учитывает точные пары четвёртого раунда, вероятностные выходы в пятый раунд и вес карт текущего TI ${fmt(daily.tournamentWeight || 1, 0)}×.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА ${daily.date.toLocaleUpperCase("ru")} · ПОСЛЕ 59 КАРТ TI`;
       $("schedule-pending").hidden = false;
       $("schedule-pending").innerHTML = `<strong>Пятый Swiss-раунд ещё условный</strong><p>Liquipedia опубликовала ${daily.publishedFixtures} точных пар четвёртого раунда и ${daily.pendingSlots} условных слотов пятого. Команды со счётом 2–1 и 1–2 гарантированно сыграют две серии; для команд 3–0 и 0–3 вероятность второй серии зависит от результата первой. До появления точных пар модель усредняет допустимых Swiss-соперников.</p><a href="${esc(daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
@@ -84,7 +84,7 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)} · ${esc(seriesText(p))}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)} · ${esc(seriesText(p))}${p.ti_maps != null ? ` · ${p.ti_maps} карт TI с весом ${fmt(daily.tournamentWeight || 1, 0)}×` : ""}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
           <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
         </div>`).join("")}</div>`;
     }).join("");
