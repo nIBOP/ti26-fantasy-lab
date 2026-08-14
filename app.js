@@ -30,6 +30,7 @@
     const expected = Number(player?.series_count);
     return expected > 1 ? `${fmt(expected, 2)} ожидаемых серии` : "1 серия";
   };
+  const roleTournamentWeight = (daily, role) => Number(daily?.tournamentWeights?.[role] || 1);
 
   function renderDailyForecast() {
     const daily = selectedDay;
@@ -50,7 +51,7 @@
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
     if (daily.status === "active_partial") {
-      $("hero-day-copy").textContent = `Прогноз учитывает точные пары четвёртого раунда, вероятностные выходы в пятый раунд и вес карт текущего TI ${fmt(daily.tournamentWeight || 1, 0)}×.`;
+      $("hero-day-copy").textContent = `Текущий TI весит сильнее истории: коры ${fmt(roleTournamentWeight(daily, "core"), 0)}×, мидеры ${fmt(roleTournamentWeight(daily, "mid"), 0)}×, саппорты ${fmt(roleTournamentWeight(daily, "support"), 0)}×; граф команд ${fmt(daily.graphTournamentWeight || 1, 0)}×.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА ${daily.date.toLocaleUpperCase("ru")} · ПОСЛЕ 59 КАРТ TI`;
       $("schedule-pending").hidden = false;
       $("schedule-pending").innerHTML = `<strong>Пятый Swiss-раунд ещё условный</strong><p>Liquipedia опубликовала ${daily.publishedFixtures} точных пар четвёртого раунда и ${daily.pendingSlots} условных слотов пятого. Команды со счётом 2–1 и 1–2 гарантированно сыграют две серии; для команд 3–0 и 0–3 вероятность второй серии зависит от результата первой. До появления точных пар модель усредняет допустимых Swiss-соперников.</p><a href="${esc(daily.source)}" target="_blank" rel="noopener">Открыть расписание Liquipedia ↗</a>`;
@@ -84,14 +85,15 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)} · ${esc(seriesText(p))}${p.ti_maps != null ? ` · ${p.ti_maps} карт TI с весом ${fmt(daily.tournamentWeight || 1, 0)}×` : ""}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
-          <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)} · ${esc(seriesText(p))}${p.ti_maps != null ? ` · ${p.ti_maps} карт TI с весом ${fmt(roleTournamentWeight(daily, p.role_group), 0)}×` : ""}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
+          <em>${fmt(p.projected_day_total)}${p.projected_day_p10 != null ? `<small>${fmt(p.projected_day_p10, 0)}–${fmt(p.projected_day_p90, 0)} · P(лучший) ${fmt(Number(p.probability_best_in_role) * 100, 0)}%</small>` : `<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small>`}</em>
         </div>`).join("")}</div>`;
     }).join("");
 
     const reliable = daily.reliableLineups || [];
     const best = reliable[0] || daily.lineups[0];
     const evBest = daily.lineups[0];
+    const riskMode = Boolean(reliable.length && best?.risk_adjusted_day_total != null);
     const alternatives = (reliable.length ? reliable : daily.lineups).slice(1, 5);
     const byName = new Map(daily.players.map(p => [p.player_name, p]));
     const names = value => String(value || "").split("+").map(x => x.trim());
@@ -100,17 +102,17 @@
       return `${name} — ${aspectChoice(player)} (${player?.recommendedAspectReason || "нет данных"})`;
     }).join("; ");
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
-      <div class="lineup-total"><span>${reliable.length ? "Надёжный · капитан ×2" : "С капитаном ×2"}</span><strong>${fmt(best.projected_day_total)}</strong><small>База ${fmt(best.base_lineup_total)}</small><small>+${fmt(best.captain_bonus)} за капитана</small></div>
+      <div class="lineup-total"><span>${riskMode ? "Надёжный · выбран по P25-score" : "Исторический прогноз"}</span><strong>${fmt(best.projected_day_total)}</strong>${riskMode ? `<small>P25-score ${fmt(best.risk_adjusted_day_total)}</small><small>Консервативная сумма P10–P90: ${fmt(best.projected_day_p10_proxy, 0)}–${fmt(best.projected_day_p90_proxy, 0)}</small>` : `<small>Расчёт до механики капитана</small>`}</div>
       <dl>
-        <div class="captain-pick"><dt>Капитан · удвоение очков</dt><dd>${esc(best.captain)} ×2</dd><small>${esc(best.captain_team)} · второй раз добавляется ${fmt(best.captain_bonus)} очка</small></div>
+        ${best.captain ? `<div class="captain-pick"><dt>Капитан · выбран по P25-score</dt><dd>${esc(best.captain)} ×2</dd><small>${esc(best.captain_team)} · средний бонус ${fmt(best.captain_bonus)}, P25 ${fmt(best.captain_risk_score)}</small></div>` : ""}
         <div><dt>Коры · ${esc(best.core_teams)}</dt><dd>${esc(best.cores)}</dd><small>${esc(lineupAspects(best.cores))}</small></div>
         <div><dt>Мидер · ${esc(best.mid_team)}</dt><dd>${esc(best.mid)}</dd><small>${esc(lineupAspects(best.mid))}</small></div>
         <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd><small>${esc(lineupAspects(best.supports))}</small></div>
       </dl>
     </article>
-    ${reliable.length && evBest ? `<div class="risk-comparison"><strong>Почему это основной состав</strong><p>У всех пяти игроков гарантированы две серии. Чистый максимум среднего — ${esc(evBest.cores)} / ${esc(evBest.mid)} / ${esc(evBest.supports)}, капитан ${esc(evBest.captain)} ×2 — даёт ${fmt(evBest.projected_day_total)}, но зависит от условной второй серии. Цена надёжности: ${fmt(Number(evBest.projected_day_total) - Number(best.projected_day_total))} очка.</p></div>` : ""}
+    ${reliable.length && evBest ? `<div class="risk-comparison"><strong>Почему это основной состав</strong><p>Все пять игроков гарантированно играют две серии. Состав и капитан оптимизированы по нижнему квартилю series-bootstrap, а не по одному среднему. Чистый максимум ожидания — ${esc(evBest.cores)} / ${esc(evBest.mid)} / ${esc(evBest.supports)}, капитан ${esc(evBest.captain)} ×2 — даёт ${fmt(evBest.projected_day_total)}, но имеет более рискованный путь.</p></div>` : ""}
     <p class="aspect-warning">* Для саппортов рекомендация предварительная: Визионер выбран по измеренным observer wards; статистики смотрителей для проверки Фотографа пока нет.</p>
-    <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)} · капитан ${esc(x.captain)} ×2</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
+    <div class="alternative-list"><h4>${riskMode ? "Ближайшие альтернативы по P25-score" : "Ближайшие альтернативы"}</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)}${x.captain ? ` · капитан ${esc(x.captain)} ×2` : ""}</span><strong>${fmt(x.risk_adjusted_day_total ?? x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
   }
 
   function rankingRows() {
