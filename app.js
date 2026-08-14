@@ -23,6 +23,13 @@
   const aspectChoice = player => player?.recommendedAspect
     ? `Выбирать: ${player.recommendedAspect}${player.recommendedAspectPreliminary ? "*" : ""}`
     : "Выбор пока не определён";
+  const seriesText = player => {
+    if (player?.guaranteed_two_series === true) return "2 серии гарантированы";
+    const chance = Number(player?.second_series_probability);
+    if (Number.isFinite(chance) && chance > 0) return `${fmt(chance * 100, 0)}% шанс второй серии`;
+    const expected = Number(player?.series_count);
+    return expected > 1 ? `${fmt(expected, 2)} ожидаемых серии` : "1 серия";
+  };
 
   function renderDailyForecast() {
     const daily = selectedDay;
@@ -77,13 +84,15 @@
       const rows = daily.players.filter(p => p.role_group === role && p.high_confidence === true).slice(0, 5);
       return `<div class="daily-role"><h4>${label}</h4>${rows.map((p, i) => `
         <div class="daily-player">
-          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)}${Number(p.series_count) > 1 ? ` · ${fmt(p.series_count, Number(p.series_count) === 2 ? 0 : 2)} ожидаемых серии` : ""}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
+          <b>${i + 1}</b><span><strong>${esc(p.player_name)}</strong><small>${esc(p.team)} → ${esc(p.opponent)} · ${esc(seriesText(p))}</small><small class="daily-aspects"><strong>${esc(aspectChoice(p))}</strong> · ${esc(p.recommendedAspectReason)}</small></span>
           <em>${fmt(p.projected_day_total)}<small class="${Number(p.matchup_delta) >= 0 ? "positive" : "negative"}">${Number(p.matchup_delta) >= 0 ? "+" : ""}${fmt(p.matchup_delta)}</small></em>
         </div>`).join("")}</div>`;
     }).join("");
 
-    const best = daily.lineups[0];
-    const alternatives = daily.lineups.slice(1, 5);
+    const reliable = daily.reliableLineups || [];
+    const best = reliable[0] || daily.lineups[0];
+    const evBest = daily.lineups[0];
+    const alternatives = (reliable.length ? reliable : daily.lineups).slice(1, 5);
     const byName = new Map(daily.players.map(p => [p.player_name, p]));
     const names = value => String(value || "").split("+").map(x => x.trim());
     const lineupAspects = value => names(value).map(name => {
@@ -91,7 +100,7 @@
       return `${name} — ${aspectChoice(player)} (${player?.recommendedAspectReason || "нет данных"})`;
     }).join("; ");
     $("daily-lineup").innerHTML = best ? `<article class="lineup-card">
-      <div class="lineup-total"><span>С капитаном ×2</span><strong>${fmt(best.projected_day_total)}</strong><small>База ${fmt(best.base_lineup_total)}</small><small>+${fmt(best.captain_bonus)} за капитана</small></div>
+      <div class="lineup-total"><span>${reliable.length ? "Надёжный · капитан ×2" : "С капитаном ×2"}</span><strong>${fmt(best.projected_day_total)}</strong><small>База ${fmt(best.base_lineup_total)}</small><small>+${fmt(best.captain_bonus)} за капитана</small></div>
       <dl>
         <div class="captain-pick"><dt>Капитан · удвоение очков</dt><dd>${esc(best.captain)} ×2</dd><small>${esc(best.captain_team)} · второй раз добавляется ${fmt(best.captain_bonus)} очка</small></div>
         <div><dt>Коры · ${esc(best.core_teams)}</dt><dd>${esc(best.cores)}</dd><small>${esc(lineupAspects(best.cores))}</small></div>
@@ -99,6 +108,7 @@
         <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd><small>${esc(lineupAspects(best.supports))}</small></div>
       </dl>
     </article>
+    ${reliable.length && evBest ? `<div class="risk-comparison"><strong>Почему это основной состав</strong><p>У всех пяти игроков гарантированы две серии. Чистый максимум среднего — ${esc(evBest.cores)} / ${esc(evBest.mid)} / ${esc(evBest.supports)}, капитан ${esc(evBest.captain)} ×2 — даёт ${fmt(evBest.projected_day_total)}, но зависит от условной второй серии. Цена надёжности: ${fmt(Number(evBest.projected_day_total) - Number(best.projected_day_total))} очка.</p></div>` : ""}
     <p class="aspect-warning">* Для саппортов рекомендация предварительная: Визионер выбран по измеренным observer wards; статистики смотрителей для проверки Фотографа пока нет.</p>
     <div class="alternative-list"><h4>Ближайшие альтернативы</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)} · капитан ${esc(x.captain)} ×2</span><strong>${fmt(x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
   }
