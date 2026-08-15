@@ -43,11 +43,12 @@
     $("active-day-label").textContent = `Матчи ${daily.date.replace(" 2026", "")}`;
     $("daily-title").textContent = `Кого выбрать на игровой день ${daily.date.replace(" 2026", "")}`;
     $("daily-copy").hidden = false;
+    $("daily-copy").innerHTML = `Прогноз привязан только к матчам <strong>${esc(daily.date)}</strong>. Используются официальный список пар, сила соперника, текущий патч, ожидаемый драфт, результаты TI с роль-зависимым весом и cluster-bootstrap целыми сериями. Двух коров и двух саппортов можно комбинировать из любых участвующих команд.`;
     $("schedule-pending").hidden = true;
     $("daily-fixtures").hidden = false;
     document.querySelector(".daily-grid").hidden = false;
     if (daily.status === "active") {
-      $("hero-day-copy").textContent = "Подбор команды на текущий игровой день — по официальным Swiss-парам Liquipedia.";
+      $("hero-day-copy").textContent = `Прогноз по официальным парам Elimination Round. Загружено 97 карт TI; веса: core ${fmt(roleTournamentWeight(daily, "core"), 0)}×, mid ${fmt(roleTournamentWeight(daily, "mid"), 0)}×, support ${fmt(roleTournamentWeight(daily, "support"), 0)}×.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
     if (daily.status === "active_partial") {
@@ -110,7 +111,7 @@
         <div><dt>Саппорты · ${esc(best.support_teams)}</dt><dd>${esc(best.supports)}</dd><small>${esc(lineupAspects(best.supports))}</small></div>
       </dl>
     </article>
-    ${reliable.length && evBest ? `<div class="risk-comparison"><strong>Почему это основной состав</strong><p>Все пять игроков гарантированно играют две серии. Состав и капитан оптимизированы по нижнему квартилю series-bootstrap, а не по одному среднему. Чистый максимум ожидания — ${esc(evBest.cores)} / ${esc(evBest.mid)} / ${esc(evBest.supports)}, капитан ${esc(evBest.captain)} ×2 — даёт ${fmt(evBest.projected_day_total)}, но имеет более рискованный путь.</p></div>` : ""}
+    ${reliable.length && evBest ? `<div class="risk-comparison"><strong>Почему это основной состав</strong><p>Участие всех пяти игроков гарантировано; каждый проведёт ${fmt(best.minimum_guaranteed_series || 1, 0)} серию. Состав и капитан оптимизированы по P25-score series-bootstrap, а не по одному среднему. Чистый максимум ожидания — ${esc(evBest.cores)} / ${esc(evBest.mid)} / ${esc(evBest.supports)}, капитан ${esc(evBest.captain)} ×2 — даёт ${fmt(evBest.projected_day_total)}, но имеет более рискованный путь.</p></div>` : ""}
     <p class="aspect-warning">* Для саппортов рекомендация предварительная: Визионер выбран по измеренным observer wards; статистики смотрителей для проверки Фотографа пока нет.</p>
     <div class="alternative-list"><h4>${riskMode ? "Ближайшие альтернативы по P25-score" : "Ближайшие альтернативы"}</h4>${alternatives.map((x, i) => `<div><span>#${i + 2} ${esc(x.cores)} / ${esc(x.mid)} / ${esc(x.supports)}${x.captain ? ` · капитан ${esc(x.captain)} ×2` : ""}</span><strong>${fmt(x.risk_adjusted_day_total ?? x.projected_day_total)}</strong></div>`).join("")}</div>` : "—";
   }
