@@ -65,6 +65,38 @@ h3 { margin-bottom: 8px; }
 .notice-icon { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border-radius: 50%; color: #17120a; background: var(--gold); font-weight: 900; }
 
 .daily-forecast { margin-bottom: 18px; overflow: hidden; }
+.playoff-forecast { margin-bottom: 18px; overflow: hidden; }
+.playoff-heading { align-items: center; }
+.source-link { color: var(--gold); font-size: 12px; font-weight: 800; text-decoration: none; }
+.playoff-copy { padding: 16px 24px 5px; color: var(--muted); }
+.scenario-tabs { display: flex; gap: 8px; padding: 14px 24px; }
+.scenario-button { display: flex; flex: 1; justify-content: space-between; gap: 12px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: #171510; }
+.scenario-button strong { color: var(--text); }
+.scenario-button.active { border-color: var(--gold); background: rgba(233,184,76,.13); }
+.scenario-button.active strong, .scenario-button.active span { color: var(--gold-soft); }
+.playoff-scenario-note { margin: 0 24px 18px; padding: 11px 13px; border-left: 3px solid var(--gold); color: var(--muted); background: rgba(233,184,76,.06); }
+.playoff-scenario-note strong, .playoff-scenario-note span { color: var(--text); }
+.playoff-grid { display: grid; grid-template-columns: .9fr 1.1fr; border-top: 1px solid var(--line); }
+.playoff-grid > div { min-width: 0; padding: 21px 24px 24px; }
+.playoff-grid > div + div { border-left: 1px solid var(--line); }
+.playoff-grid h3 { font: 700 20px Georgia, serif; }
+.playoff-quarterfinals { display: grid; gap: 9px; }
+.playoff-match { padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: rgba(0,0,0,.12); }
+.playoff-match > div:not(.playoff-probability) { display: flex; justify-content: space-between; gap: 10px; }
+.playoff-match strong { color: var(--muted); font-size: 12px; }
+.playoff-match strong.favorite { color: var(--text); }
+.playoff-match span { color: var(--gold-soft); font-size: 11px; font-weight: 800; }
+.playoff-probability { display: flex; height: 4px; margin: 6px 0; overflow: hidden; border-radius: 99px; background: #332c22; }
+.playoff-probability b { background: var(--gold); }
+.playoff-probability i { background: #65717f; }
+.playoff-team-odds { display: grid; }
+.playoff-team-row { display: grid; grid-template-columns: 18px minmax(135px, 1fr) minmax(90px, 1fr) 48px; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(239,207,125,.07); }
+.playoff-team-row > b { color: var(--gold-soft); }
+.playoff-team-row span strong, .playoff-team-row span small { display: block; }
+.playoff-team-row span small { color: var(--muted); font-size: 9px; }
+.playoff-team-row em { color: var(--gold-soft); text-align: right; font-style: normal; font-weight: 800; }
+.odds-track { height: 7px; overflow: hidden; border-radius: 99px; background: #14120f; }
+.odds-track i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #a9782b, var(--gold)); }
 .model-chip { padding: 6px 10px; border: 1px solid rgba(233,184,76,.25); border-radius: 999px; color: var(--gold-soft); background: rgba(233,184,76,.07); font-size: 11px; font-weight: 800; }
 .daily-copy { padding: 16px 24px 4px; color: var(--muted); }
 .schedule-pending { margin: 20px 24px 26px; padding: 22px; border: 1px dashed rgba(233,184,76,.4); border-radius: 14px; background: rgba(233,184,76,.06); }
@@ -234,6 +266,8 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
 @media (max-width: 1050px) {
   .fixture-grid { grid-template-columns: repeat(2, 1fr); }
   .daily-grid { grid-template-columns: 1fr; }
+  .playoff-grid { grid-template-columns: 1fr; }
+  .playoff-grid > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .daily-column + .daily-column { border-left: 0; border-top: 1px solid var(--line); }
   .controls { grid-template-columns: 1fr 1fr; }
   .controls > div:first-child { grid-column: 1 / -1; }
@@ -256,6 +290,9 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
   .position-tab { flex: 1 0 28%; }
   .leaders { grid-template-columns: 1fr; }
   .fixture-grid, #daily-role-leaders { grid-template-columns: 1fr; }
+  .scenario-tabs { display: grid; }
+  .playoff-team-row { grid-template-columns: 18px minmax(125px, 1fr) 45px; }
+  .playoff-team-row .odds-track { display: none; }
   .lineup-card { grid-template-columns: 1fr; }
   .leader-card { min-height: 118px; }
   .section-heading, .explorer-heading { display: block; }

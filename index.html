@@ -33,7 +33,31 @@
   <main class="shell app-view" id="forecast-view">
     <section class="notice" aria-label="Ограничение данных">
       <span class="notice-icon">!</span>
-      <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. В актуальную выборку загружено 97 завершённых карт TI.</p>
+      <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. В актуальную выборку загружено 109 завершённых карт TI.</p>
+    </section>
+
+    <section class="panel playoff-forecast">
+      <div class="section-heading playoff-heading">
+        <div>
+          <p class="eyebrow">ПРОГНОЗ ПЛЕЙ‑ОФФ · 20–23 АВГУСТА</p>
+          <h2>Кто выиграет The International 2026</h2>
+        </div>
+        <a class="source-link" id="playoff-source" target="_blank" rel="noopener">Сетка Liquipedia ↗</a>
+      </div>
+      <div class="playoff-copy">Три сценария используют одну модель Bradley–Terry и одну сетку, но по-разному взвешивают текущий TI. Вероятности получены симуляцией полного double-elimination плей‑офф.</div>
+      <div class="scenario-tabs" id="playoff-scenario-tabs"></div>
+      <div class="playoff-scenario-note" id="playoff-scenario-note"></div>
+      <div class="playoff-grid">
+        <div>
+          <h3>Четвертьфиналы верхней сетки</h3>
+          <div class="playoff-quarterfinals" id="playoff-quarterfinals"></div>
+        </div>
+        <div>
+          <h3>Шансы на итог турнира</h3>
+          <div class="playoff-team-odds" id="playoff-team-odds"></div>
+        </div>
+      </div>
+      <div class="uncertainty-note" id="playoff-meta"></div>
     </section>
 
     <section class="panel daily-forecast">

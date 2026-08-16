@@ -13,6 +13,7 @@
   ];
 
   const state = {category: "core", search: "", sort: "model", selected: null, metric: "kills"};
+  const playoffState = {scenario: "balanced"};
   const $ = (id) => document.getElementById(id);
   const fmt = (value, digits = 2) => value == null || Number.isNaN(Number(value)) ? "—" : Number(value).toLocaleString("ru-RU", {minimumFractionDigits: digits, maximumFractionDigits: digits});
   const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
@@ -32,6 +33,37 @@
   };
   const roleTournamentWeight = (daily, role) => Number(daily?.tournamentWeights?.[role] || 1);
 
+  function renderPlayoffForecast() {
+    const playoff = data.playoffs;
+    if (!playoff) return;
+    const scenario = playoff.scenarios.find(item => item.id === playoffState.scenario) || playoff.scenarios[0];
+    $("playoff-source").href = playoff.source;
+    $("playoff-scenario-tabs").innerHTML = playoff.scenarios.map(item => `
+      <button class="scenario-button ${item.id === scenario.id ? "active" : ""}" data-playoff-scenario="${item.id}">
+        <strong>${esc(item.label)}</strong><span>TI ${fmt(item.tiWeight, 0)}×</span>
+      </button>`).join("");
+    document.querySelectorAll("[data-playoff-scenario]").forEach(button => button.addEventListener("click", () => {
+      playoffState.scenario = button.dataset.playoffScenario;
+      renderPlayoffForecast();
+    }));
+    $("playoff-scenario-note").innerHTML = `<strong>${esc(scenario.label)}:</strong> ${esc(scenario.description)} <span>Фаворит — ${esc(scenario.championPick)}.</span>`;
+    $("playoff-quarterfinals").innerHTML = scenario.quarterfinals.map(match => {
+      const pA = Number(match.seriesProbabilityA);
+      const pB = 1 - pA;
+      return `<article class="playoff-match">
+        <div><strong class="${pA >= .5 ? "favorite" : ""}">${esc(match.teamA)}</strong><span>${fmt(pA * 100, 0)}%</span></div>
+        <div class="playoff-probability"><b style="width:${pA * 100}%"></b><i style="width:${pB * 100}%"></i></div>
+        <div><strong class="${pB > .5 ? "favorite" : ""}">${esc(match.teamB)}</strong><span>${fmt(pB * 100, 0)}%</span></div>
+      </article>`;
+    }).join("");
+    const maxChampion = Math.max(...scenario.teams.map(team => Number(team.champion)));
+    $("playoff-team-odds").innerHTML = scenario.teams.map((team, index) => `<div class="playoff-team-row">
+      <b>${index + 1}</b><span><strong>${esc(team.team)}</strong><small>финал ${fmt(Number(team.final) * 100, 0)}% · топ‑3 ${fmt(Number(team.top3) * 100, 0)}%</small></span>
+      <div class="odds-track"><i style="width:${Number(team.champion) / maxChampion * 100}%"></i></div><em>${fmt(Number(team.champion) * 100, 1)}%</em>
+    </div>`).join("");
+    $("playoff-meta").innerHTML = `${playoff.tiMaps} карт текущего TI · ${Number(playoff.simulationsPerScenario).toLocaleString("ru-RU")} симуляций на сценарий · Bo3, гранд-финал Bo5. Диапазон сценариев нужен как проверка чувствительности, а не как доверительный интервал.`;
+  }
+
   function renderDailyForecast() {
     const daily = selectedDay;
     if (!daily) return;
@@ -48,7 +80,7 @@
     $("daily-fixtures").hidden = false;
     document.querySelector(".daily-grid").hidden = false;
     if (daily.status === "active") {
-      $("hero-day-copy").textContent = `Прогноз по официальным парам Elimination Round. Загружено 97 карт TI; веса: core ${fmt(roleTournamentWeight(daily, "core"), 0)}×, mid ${fmt(roleTournamentWeight(daily, "mid"), 0)}×, support ${fmt(roleTournamentWeight(daily, "support"), 0)}×.`;
+      $("hero-day-copy").textContent = `Прогноз Elimination Round был рассчитан до начала серий на 97 картах TI; для прогноза плей‑офф ниже уже загружено 109 карт.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
     if (daily.status === "active_partial") {
@@ -303,6 +335,7 @@
   $("roster-checked").textContent = data.meta.rosterChecked;
   $("map-count").textContent = Number(data.meta.playerMapObservations).toLocaleString("ru-RU");
   $("formula-list").innerHTML = formulas.map(f => `<li>${f}</li>`).join("");
+  renderPlayoffForecast();
   renderDailyForecast();
   $("search").addEventListener("input", e => {state.search = e.target.value; render();});
   $("sort-select").addEventListener("change", e => {state.sort = e.target.value; render();});
