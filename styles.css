@@ -53,6 +53,12 @@ h3 { margin-bottom: 8px; }
 .hero-meta { display: grid; gap: 8px; min-width: 260px; padding-bottom: 8px; color: var(--muted); text-align: right; }
 .hero-meta strong { color: var(--text); }
 
+.mode-switch { display: flex; gap: 8px; margin-bottom: 18px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: rgba(22,19,15,.86); }
+.mode-button { flex: 1; padding: 12px 18px; border: 1px solid transparent; border-radius: 10px; color: var(--muted); background: transparent; font-weight: 800; }
+.mode-button:hover { color: var(--text); background: rgba(233,184,76,.05); }
+.mode-button.active { color: #1a1409; border-color: var(--gold); background: var(--gold); }
+.dota-rules-mode .hero .active-day, .dota-rules-mode .hero .day-switch, .dota-rules-mode .hero .hero-copy { display: none; }
+
 .panel { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
 .notice { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 12px 16px; border: 1px solid rgba(233,184,76,.2); border-radius: 12px; color: #d9cba9; background: rgba(95,68,19,.19); }
 .notice p { margin: 0; }
@@ -201,6 +207,30 @@ td.player-cell { min-width: 175px; text-align: left; }
 code { color: var(--gold-soft); }
 footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12px; }
 
+.dota-rules-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 28px; align-items: center; margin-bottom: 18px; padding: 26px; }
+.dota-rules-intro p:last-child { max-width: 800px; margin: 10px 0 0; color: var(--muted); }
+.rules-scope { display: grid; grid-template-columns: repeat(3, auto); gap: 8px; min-width: 330px; }
+.rules-scope span { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); text-align: center; }
+.rules-scope strong { display: block; color: var(--gold-soft); font-size: 20px; }
+.rules-scope small { grid-column: 1 / -1; color: var(--muted); text-align: center; }
+.dota-rules-controls { grid-template-columns: minmax(420px, 1.1fr) minmax(280px, .8fr) minmax(230px, .7fr); margin-bottom: 18px; }
+.dota-rules-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(330px, .7fr); gap: 18px; align-items: start; }
+.dota-ranking-panel { overflow: hidden; }
+.dota-table th:nth-child(2) { text-align: left; }
+.formula-panel { position: sticky; top: 16px; overflow: hidden; }
+.formula-groups { max-height: 760px; overflow-y: auto; padding: 17px 20px 22px; }
+.formula-group + .formula-group { margin-top: 22px; }
+.formula-group h3 { margin: 0 0 7px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+.formula-red h3, .text-red { color: var(--red); }
+.formula-blue h3, .text-blue { color: var(--blue); }
+.formula-green h3, .text-green { color: var(--green); }
+.formula-item { padding: 9px 0; border-top: 1px solid rgba(239,207,125,.08); }
+.formula-item strong, .formula-item span, .formula-item small { display: block; }
+.formula-item span { color: var(--muted); font-size: 11px; }
+.formula-item small { color: #e49374; font-size: 10px; }
+.formula-unavailable { opacity: .5; }
+.dota-rules-note { margin-top: 18px; }
+
 @media (max-width: 1050px) {
   .fixture-grid { grid-template-columns: repeat(2, 1fr); }
   .daily-grid { grid-template-columns: 1fr; }
@@ -210,6 +240,10 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
   .workspace { grid-template-columns: 1fr; }
   .player-panel { position: static; min-height: 0; }
   .empty-state { min-height: 260px; }
+  .dota-rules-intro, .dota-rules-layout { grid-template-columns: 1fr; }
+  .formula-panel { position: static; }
+  .dota-rules-controls { grid-template-columns: 1fr 1fr; }
+  .dota-rules-controls > div:first-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 700px) {
@@ -230,4 +264,8 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
   .bar-row { grid-template-columns: 105px 1fr 58px; }
   .method-grid { grid-template-columns: 1fr; gap: 15px; }
   .method-grid ul { columns: 1; }
+  .mode-switch { flex-direction: column; }
+  .dota-rules-controls { grid-template-columns: 1fr; }
+  .dota-rules-controls > div:first-child { grid-column: auto; }
+  .rules-scope { min-width: 0; }
 }

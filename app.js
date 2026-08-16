@@ -222,6 +222,83 @@
     state.selected = null; $("player-content").hidden = true; $("player-empty").hidden = false; renderTable(rankingRows());
   }
 
+  const dotaState = {role: "core", metric: "kills", search: ""};
+  const dotaRoleNames = {core: "1/3 · Коры", mid: "2 · Мидеры", support: "4/5 · Поддержка"};
+  const dotaColorNames = {red: "Красная эмблема", blue: "Синяя эмблема", green: "Зелёная эмблема"};
+  const dotaAllowedColors = {core: ["red", "green"], mid: ["red", "blue", "green"], support: ["blue", "green"]};
+  const dotaDefaultMetric = {core: "kills", mid: "kills", support: "observer_wards"};
+
+  function setView(view, updateHash = true) {
+    const isDota = view === "dota-rules";
+    $("forecast-view").hidden = isDota;
+    $("dota-rules-view").hidden = !isDota;
+    document.body.classList.toggle("dota-rules-mode", isDota);
+    document.querySelectorAll(".mode-button").forEach(button => {
+      button.classList.toggle("active", button.dataset.view === view);
+      button.setAttribute("aria-selected", button.dataset.view === view ? "true" : "false");
+    });
+    if (isDota) renderDotaRules();
+    if (updateHash) history.replaceState(null, "", isDota ? "#dota-rules" : "#forecast");
+  }
+
+  function renderDotaRoleTabs() {
+    $("dota-role-tabs").innerHTML = Object.entries(dotaRoleNames).map(([role, label]) =>
+      `<button class="position-tab ${role === dotaState.role ? "active" : ""}" data-dota-role="${role}" role="tab">${label}</button>`
+    ).join("");
+    document.querySelectorAll("[data-dota-role]").forEach(button => button.addEventListener("click", () => {
+      dotaState.role = button.dataset.dotaRole;
+      const currentRule = data.dotaRules.meta.rules.find(rule => rule.metric === dotaState.metric);
+      if (!currentRule || !dotaAllowedColors[dotaState.role].includes(currentRule.color)) dotaState.metric = dotaDefaultMetric[dotaState.role];
+      renderDotaRules();
+    }));
+  }
+
+  function renderDotaMetricOptions() {
+    const rules = data.dotaRules.meta.rules.filter(rule => dotaAllowedColors[dotaState.role].includes(rule.color));
+    $("dota-metric-select").innerHTML = rules.map(rule => {
+      const unavailable = data.dotaRules.meta.unavailableMetrics.includes(rule.metric);
+      return `<option value="${rule.metric}" ${rule.metric === dotaState.metric ? "selected" : ""} ${unavailable ? "disabled" : ""}>${esc(rule.label)} · ${dotaColorNames[rule.color]}${unavailable ? " · нет данных" : ""}</option>`;
+    }).join("");
+  }
+
+  function renderDotaFormulaGroups() {
+    const unavailable = new Set(data.dotaRules.meta.unavailableMetrics);
+    $("dota-formula-groups").innerHTML = ["red", "blue", "green"].map(color => `
+      <div class="formula-group formula-${color}">
+        <h3>${dotaColorNames[color]}</h3>
+        ${data.dotaRules.meta.rules.filter(rule => rule.color === color).map(rule => `
+          <div class="formula-item ${unavailable.has(rule.metric) ? "formula-unavailable" : ""}">
+            <strong>${esc(rule.label)}</strong><span>${esc(rule.formula)}</span>${unavailable.has(rule.metric) ? "<small>нет полного источника</small>" : ""}
+          </div>`).join("")}
+      </div>`).join("");
+  }
+
+  function renderDotaRules() {
+    if (!data.dotaRules) return;
+    renderDotaRoleTabs();
+    renderDotaMetricOptions();
+    const rule = data.dotaRules.meta.rules.find(item => item.metric === dotaState.metric);
+    const query = dotaState.search.trim().toLocaleLowerCase("ru");
+    const rows = data.dotaRules.playerMetrics.filter(row =>
+      row.role_group === dotaState.role && row.metric === dotaState.metric && row.weighted_mean_score != null &&
+      (!query || `${row.player_name} ${row.team}`.toLocaleLowerCase("ru").includes(query))
+    ).sort((a, b) => Number(b.weighted_mean_score) - Number(a.weighted_mean_score));
+    $("dota-color-label").textContent = dotaColorNames[rule.color].toUpperCase();
+    $("dota-ranking-title").textContent = `${rule.label} · ${dotaRoleNames[dotaState.role]}`;
+    $("dota-result-count").textContent = `${rows.length} игроков`;
+    $("dota-metric-summary").innerHTML = `<span>Формула: <strong>${esc(rule.formula)}</strong></span><span>Цвет: <strong class="text-${rule.color}">${dotaColorNames[rule.color]}</strong></span><span>Сортировка: <strong>взвешенное среднее</strong></span>`;
+    $("dota-ranking-body").innerHTML = rows.map((row, index) => `<tr>
+      <td class="rank-number">${index + 1}</td>
+      <td class="player-cell"><strong>${esc(row.player_name)}</strong><span>${esc(row.team)} · позиция ${row.position}</span></td>
+      <td>${row.observed_maps}</td><td>${row.ti_maps}</td>
+      <td>${fmt(row.weighted_mean_value)}</td><td class="value-main">${fmt(row.weighted_mean_score, 0)}</td>
+      <td>${fmt(row.weighted_p75_score, 0)}</td><td>${fmt(Number(row.nonzero_rate) * 100, 0)}%</td>
+    </tr>`).join("");
+    const meta = data.dotaRules.meta;
+    const slots = dotaState.role === "core" ? "2 красных + 1 зелёная" : dotaState.role === "mid" ? "1 красная + 1 синяя + 1 зелёная" : "2 синих + 1 зелёная";
+    $("dota-rules-scope").innerHTML = `<span><strong>${meta.maps}</strong> карт Tier‑1</span><span><strong>${meta.tiMaps}</strong> карт TI</span><span><strong>${meta.players}</strong> игроков</span><small>${slots}<br>TI-вес: коры ${meta.tiRoleWeights.core}× · мид ${meta.tiRoleWeights.mid}× · поддержка ${meta.tiRoleWeights.support}×</small>`;
+  }
+
   $("data-cutoff").textContent = data.meta.dataCutoff;
   $("roster-checked").textContent = data.meta.rosterChecked;
   $("map-count").textContent = Number(data.meta.playerMapObservations).toLocaleString("ru-RU");
@@ -231,5 +308,10 @@
   $("sort-select").addEventListener("change", e => {state.sort = e.target.value; render();});
   $("metric-select").addEventListener("change", e => {state.metric = e.target.value; renderExplorer();});
   $("close-player").addEventListener("click", closePlayer);
+  document.querySelectorAll(".mode-button").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+  $("dota-metric-select").addEventListener("change", event => {dotaState.metric = event.target.value; renderDotaRules();});
+  $("dota-search").addEventListener("input", event => {dotaState.search = event.target.value; renderDotaRules();});
   render();
+  renderDotaFormulaGroups();
+  setView(location.hash === "#dota-rules" ? "dota-rules" : "forecast", false);
 })();

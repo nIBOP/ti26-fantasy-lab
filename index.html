@@ -25,10 +25,15 @@
     </div>
   </header>
 
-  <main class="shell">
+  <nav class="mode-switch shell" aria-label="Разделы Fantasy Lab">
+    <button class="mode-button active" data-view="forecast">Прогноз фэнтези</button>
+    <button class="mode-button" data-view="dota-rules">Статистика по правилам Dota</button>
+  </nav>
+
+  <main class="shell app-view" id="forecast-view">
     <section class="notice" aria-label="Ограничение данных">
       <span class="notice-icon">!</span>
-      <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. TI уже добавлен как новая лига, но завершённых карт в API пока нет.</p>
+      <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. В актуальную выборку загружено 97 завершённых карт TI.</p>
     </section>
 
     <section class="panel daily-forecast">
@@ -179,6 +184,52 @@
         </div>
       </div>
     </details>
+  </main>
+
+  <main class="shell app-view" id="dota-rules-view" hidden>
+    <section class="panel dota-rules-intro">
+      <div>
+        <p class="eyebrow">КЛАССИЧЕСКАЯ ШКАЛА ОЧКОВ</p>
+        <h2>Статистика игроков по эмблемам</h2>
+        <p>Выберите роль и показатель. Рейтинг показывает базовые очки за карту от конкретной эмблемы — до качества и её свойства. В расчёте только групповые стадии Tier‑1 2026; матчи текущего TI имеют повышенный вес.</p>
+      </div>
+      <div class="rules-scope" id="dota-rules-scope"></div>
+    </section>
+
+    <section class="controls panel dota-rules-controls">
+      <div>
+        <span class="control-label">Категория игрока</span>
+        <div class="position-tabs" id="dota-role-tabs" role="tablist"></div>
+      </div>
+      <label><span class="control-label">Эмблема</span><select id="dota-metric-select"></select></label>
+      <label class="search-field"><span class="control-label">Игрок или команда</span><input id="dota-search" type="search" placeholder="Yatoro или Team Spirit" autocomplete="off"></label>
+    </section>
+
+    <section class="dota-rules-layout">
+      <article class="panel dota-ranking-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow" id="dota-color-label">—</p><h2 id="dota-ranking-title">—</h2></div>
+          <span class="result-count" id="dota-result-count">—</span>
+        </div>
+        <div class="metric-summary" id="dota-metric-summary"></div>
+        <div class="table-wrap">
+          <table class="dota-table">
+            <thead><tr><th>#</th><th>Игрок</th><th>Карт</th><th>TI</th><th>Событие / карта</th><th>Очки / карта</th><th>p75 очков</th><th>Частота</th></tr></thead>
+            <tbody id="dota-ranking-body"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="panel formula-panel">
+        <div class="section-heading"><div><p class="eyebrow">СПРАВОЧНИК</p><h2>Все формулы</h2></div></div>
+        <div class="formula-groups" id="dota-formula-groups"></div>
+      </aside>
+    </section>
+
+    <section class="notice dota-rules-note">
+      <span class="notice-icon">!</span>
+      <p><strong>Как читать рейтинг:</strong> это ценность одной выбранной эмблемы, а не сумма всех показателей игрока. Качество I–V и свойства эмблемы применяются поверх показанных базовых очков. Безумруды и смотрители пока исключены из рейтинга из-за отсутствия полного источника.</p>
+    </section>
   </main>
 
   <footer class="shell">TI 2026 Fantasy Lab · локальный аналитический dashboard</footer>
