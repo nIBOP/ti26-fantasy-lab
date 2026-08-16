@@ -27,6 +27,7 @@
 
   <nav class="mode-switch shell" aria-label="Разделы Fantasy Lab">
     <button class="mode-button active" data-view="forecast">Прогноз фэнтези</button>
+    <button class="mode-button" data-view="playoffs">Прогноз плей‑офф</button>
     <button class="mode-button" data-view="dota-rules">Статистика по правилам Dota</button>
   </nav>
 
@@ -34,30 +35,6 @@
     <section class="notice" aria-label="Ограничение данных">
       <span class="notice-icon">!</span>
       <p><strong>Два показателя пока недоступны:</strong> смотрители и безумруды. Использования лотосов найдены и посчитаны по весам 1/3/6. В актуальную выборку загружено 109 завершённых карт TI.</p>
-    </section>
-
-    <section class="panel playoff-forecast">
-      <div class="section-heading playoff-heading">
-        <div>
-          <p class="eyebrow">ПРОГНОЗ ПЛЕЙ‑ОФФ · 20–23 АВГУСТА</p>
-          <h2>Кто выиграет The International 2026</h2>
-        </div>
-        <a class="source-link" id="playoff-source" target="_blank" rel="noopener">Сетка Liquipedia ↗</a>
-      </div>
-      <div class="playoff-copy">Три сценария используют одну модель Bradley–Terry и одну сетку, но по-разному взвешивают текущий TI. Вероятности получены симуляцией полного double-elimination плей‑офф.</div>
-      <div class="scenario-tabs" id="playoff-scenario-tabs"></div>
-      <div class="playoff-scenario-note" id="playoff-scenario-note"></div>
-      <div class="playoff-grid">
-        <div>
-          <h3>Четвертьфиналы верхней сетки</h3>
-          <div class="playoff-quarterfinals" id="playoff-quarterfinals"></div>
-        </div>
-        <div>
-          <h3>Шансы на итог турнира</h3>
-          <div class="playoff-team-odds" id="playoff-team-odds"></div>
-        </div>
-      </div>
-      <div class="uncertainty-note" id="playoff-meta"></div>
     </section>
 
     <section class="panel daily-forecast">
@@ -208,6 +185,35 @@
         </div>
       </div>
     </details>
+  </main>
+
+  <main class="shell app-view" id="playoffs-view" hidden>
+    <section class="panel playoff-forecast">
+      <div class="section-heading playoff-heading">
+        <div>
+          <p class="eyebrow">ПРОГНОЗ ПЛЕЙ‑ОФФ · 20–23 АВГУСТА</p>
+          <h2>Полное предсказание сетки TI 2026</h2>
+        </div>
+        <a class="source-link" id="playoff-source" target="_blank" rel="noopener">Сетка Liquipedia ↗</a>
+      </div>
+      <div class="playoff-copy">Три сценария используют одну модель Bradley–Terry и официальную double-elimination сетку, но по-разному взвешивают текущий TI. Для каждого варианта ниже построен наиболее вероятный путь всех серий и отдельно проведена симуляция распределения итоговых мест.</div>
+      <div class="scenario-tabs" id="playoff-scenario-tabs"></div>
+      <div class="playoff-scenario-note" id="playoff-scenario-note"></div>
+
+      <div class="full-bracket" id="playoff-full-bracket"></div>
+
+      <div class="playoff-grid">
+        <div>
+          <h3>Стартовые четвертьфиналы</h3>
+          <div class="playoff-quarterfinals" id="playoff-quarterfinals"></div>
+        </div>
+        <div>
+          <h3>Вероятности итогового результата</h3>
+          <div class="playoff-team-odds" id="playoff-team-odds"></div>
+        </div>
+      </div>
+      <div class="uncertainty-note" id="playoff-meta"></div>
+    </section>
   </main>
 
   <main class="shell app-view" id="dota-rules-view" hidden>

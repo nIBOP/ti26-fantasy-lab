@@ -46,7 +46,25 @@
       playoffState.scenario = button.dataset.playoffScenario;
       renderPlayoffForecast();
     }));
-    $("playoff-scenario-note").innerHTML = `<strong>${esc(scenario.label)}:</strong> ${esc(scenario.description)} <span>Фаворит — ${esc(scenario.championPick)}.</span>`;
+    const predictedFinal = scenario.predictedBracket.find(match => match.id === "GF");
+    $("playoff-scenario-note").innerHTML = `<strong>${esc(scenario.label)}:</strong> ${esc(scenario.description)} <span>Прогноз финала: ${esc(predictedFinal.teamA)} — ${esc(predictedFinal.teamB)}; чемпион — ${esc(predictedFinal.winner)} (${fmt(Number(predictedFinal.winnerProbability) * 100, 0)}%).</span>`;
+    const matchById = new Map(scenario.predictedBracket.map(match => [match.id, match]));
+    const bracketLanes = [
+      ["Верхняя сетка", [["UQF1", "UQF2", "UQF3", "UQF4"], ["USF1", "USF2"], ["UBF"]]],
+      ["Нижняя сетка", [["LBR1-1", "LBR1-2"], ["LBQF1", "LBQF2"], ["LBSF"], ["LBF"]]],
+      ["Финал", [["GF"]]],
+    ];
+    const bracketCard = match => {
+      const pA = Number(match.probabilityA), pB = 1 - pA;
+      return `<article class="bracket-match">
+        <small>${esc(match.id)} · Bo${match.bestOf}</small>
+        <div class="${match.winner === match.teamA ? "winner" : ""}"><strong>${esc(match.teamA)}</strong><span>${fmt(pA * 100, 0)}%</span></div>
+        <div class="${match.winner === match.teamB ? "winner" : ""}"><strong>${esc(match.teamB)}</strong><span>${fmt(pB * 100, 0)}%</span></div>
+      </article>`;
+    };
+    $("playoff-full-bracket").innerHTML = bracketLanes.map(([lane, rounds]) => `<section class="bracket-lane">
+      <h3>${lane}</h3><div class="bracket-rounds">${rounds.map((ids, index) => `<div class="bracket-round"><h4>${index + 1} раунд</h4>${ids.map(id => bracketCard(matchById.get(id))).join("")}</div>`).join("")}</div>
+    </section>`).join("");
     $("playoff-quarterfinals").innerHTML = scenario.quarterfinals.map(match => {
       const pA = Number(match.seriesProbabilityA);
       const pB = 1 - pA;
@@ -261,16 +279,21 @@
   const dotaDefaultMetric = {core: "kills", mid: "kills", support: "observer_wards"};
 
   function setView(view, updateHash = true) {
+    const isForecast = view === "forecast";
+    const isPlayoffs = view === "playoffs";
     const isDota = view === "dota-rules";
-    $("forecast-view").hidden = isDota;
+    $("forecast-view").hidden = !isForecast;
+    $("playoffs-view").hidden = !isPlayoffs;
     $("dota-rules-view").hidden = !isDota;
     document.body.classList.toggle("dota-rules-mode", isDota);
+    document.body.classList.toggle("playoffs-mode", isPlayoffs);
     document.querySelectorAll(".mode-button").forEach(button => {
       button.classList.toggle("active", button.dataset.view === view);
       button.setAttribute("aria-selected", button.dataset.view === view ? "true" : "false");
     });
     if (isDota) renderDotaRules();
-    if (updateHash) history.replaceState(null, "", isDota ? "#dota-rules" : "#forecast");
+    if (isPlayoffs) renderPlayoffForecast();
+    if (updateHash) history.replaceState(null, "", `#${view}`);
   }
 
   function renderDotaRoleTabs() {
@@ -346,5 +369,5 @@
   $("dota-search").addEventListener("input", event => {dotaState.search = event.target.value; renderDotaRules();});
   render();
   renderDotaFormulaGroups();
-  setView(location.hash === "#dota-rules" ? "dota-rules" : "forecast", false);
+  setView(location.hash === "#dota-rules" ? "dota-rules" : location.hash === "#playoffs" ? "playoffs" : "forecast", false);
 })();
