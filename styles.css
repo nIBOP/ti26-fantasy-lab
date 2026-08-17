@@ -319,3 +319,68 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
   .dota-rules-controls > div:first-child { grid-column: auto; }
   .rules-scope { min-width: 0; }
 }
+
+/* Ward map */
+.ward-intro { display:flex; justify-content:space-between; gap:24px; align-items:flex-start; margin-bottom:18px; }
+.ward-intro > *, .ward-layout > *, .ward-controls > *, .ward-stat-grid > * { min-width:0; }
+.ward-intro h2 { margin:4px 0 10px; }
+.ward-intro p { max-width:760px; color:var(--muted); }
+.ward-intro h2,.ward-intro p,.ward-stat,.ward-methodology { overflow-wrap:anywhere; }
+.ward-scope { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; min-width:270px; }
+.ward-scope span { padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.025); color:var(--muted); font-size:12px; }
+.ward-scope strong { display:block; color:var(--text); font-size:18px; }
+.ward-scope .ward-loader { grid-column:1/-1; }
+.ward-controls { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin-bottom:12px; }
+.ward-controls label { min-width:0; }
+.ward-controls select { width:100%; min-width:0; max-width:100%; text-overflow:ellipsis; }
+.ward-filter-chips { display:flex; gap:7px; flex-wrap:wrap; min-height:30px; margin:0 0 10px; }
+.ward-filter-chips span { max-width:100%; overflow-wrap:anywhere; border:1px solid rgba(70,211,184,.25); color:#9ee9da; background:rgba(70,211,184,.07); padding:5px 9px; border-radius:999px; font-size:11px; }
+.ward-warning { margin:0 0 12px; }
+.ward-layout { display:grid; grid-template-columns:minmax(0,1fr) 290px; gap:18px; align-items:start; }
+.ward-map-panel { padding:14px; }
+.ward-map-frame { position:relative; width:100%; max-width:100%; aspect-ratio:1; overflow:hidden; border-radius:14px; background:#0b1211; border:1px solid rgba(255,255,255,.08); }
+.ward-map-frame canvas { position:absolute; inset:0; width:100%; height:100%; }
+.ward-map-frame canvas { z-index:2; cursor:crosshair; }
+.ward-corner { position:absolute; z-index:3; font-size:10px; letter-spacing:.16em; font-weight:800; text-shadow:0 1px 5px #000; pointer-events:none; }
+.ward-radiant { left:12px; bottom:10px; color:#62d8db; }
+.ward-dire { right:12px; top:10px; color:#ff796f; }
+.ward-tooltip { position:absolute; z-index:5; pointer-events:none; background:rgba(9,13,15,.95); border:1px solid rgba(255,255,255,.14); border-radius:8px; padding:8px 10px; font-size:12px; box-shadow:0 10px 35px rgba(0,0,0,.35); }
+.ward-tooltip strong { display:block; color:#fff; margin-bottom:2px; }
+.ward-legend { display:flex; align-items:center; flex-wrap:wrap; gap:10px; color:var(--muted); font-size:11px; padding:10px 4px 0; }
+.ward-legend i { display:inline-block; width:18px; height:7px; border-radius:5px; vertical-align:middle; margin-right:3px; }
+.legend-low { background:rgba(255,193,73,.25); }.legend-high { background:#ff594d; box-shadow:0 0 10px #ff594d; }
+#ward-scale-label { margin-left:auto; text-align:right; }
+.ward-performance { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; margin-top:10px; }
+.ward-performance span { min-width:0; padding:7px 8px; border:1px solid var(--line); border-radius:8px; background:rgba(255,255,255,.02); }
+.ward-performance small,.ward-performance strong { display:block; overflow-wrap:anywhere; }
+.ward-performance small { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+.ward-performance strong { margin-top:2px; font-size:12px; }
+.ward-stat-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.ward-stat { min-height:104px; padding:14px; border:1px solid var(--line); border-radius:12px; background:var(--surface); }
+.ward-stat span { display:block; color:var(--muted); font-size:11px; line-height:1.35; }
+.ward-stat strong { display:block; margin:8px 0 4px; font-size:23px; color:var(--text); }
+.ward-stat small { color:var(--muted); }
+.ward-stat.wide { grid-column:1/-1; }
+.ward-methodology { margin-top:18px; }
+body.ward-map-mode { overflow-x:clip; }
+body.ward-map-mode .hero-copy,body.ward-map-mode .day-switch,body.ward-map-mode .active-day { display:none; }
+@media (max-width:1100px) {
+  .ward-controls { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .ward-layout { grid-template-columns:1fr; }
+  .ward-stat-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .ward-stat.wide { grid-column:auto; }
+}
+@media (max-width:700px) {
+  .ward-intro { display:block; }.ward-scope { min-width:0; margin-top:16px; }
+  .ward-controls { grid-template-columns:repeat(2,minmax(0,1fr)); padding:14px; }
+  .ward-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ward-map-panel { padding:7px; }
+  .ward-performance { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #ward-scale-label { width:100%; margin-left:0; text-align:left; }
+}
+@media (max-width:480px) {
+  .ward-controls { grid-template-columns:minmax(0,1fr); }
+  .ward-scope { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ward-stat-grid { grid-template-columns:minmax(0,1fr); }
+  .ward-stat.wide { grid-column:auto; }
+}

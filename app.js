@@ -282,17 +282,21 @@
     const isForecast = view === "forecast";
     const isPlayoffs = view === "playoffs";
     const isDota = view === "dota-rules";
+    const isWardMap = view === "ward-map";
     $("forecast-view").hidden = !isForecast;
     $("playoffs-view").hidden = !isPlayoffs;
     $("dota-rules-view").hidden = !isDota;
+    $("ward-map-view").hidden = !isWardMap;
     document.body.classList.toggle("dota-rules-mode", isDota);
     document.body.classList.toggle("playoffs-mode", isPlayoffs);
+    document.body.classList.toggle("ward-map-mode", isWardMap);
     document.querySelectorAll(".mode-button").forEach(button => {
       button.classList.toggle("active", button.dataset.view === view);
       button.setAttribute("aria-selected", button.dataset.view === view ? "true" : "false");
     });
     if (isDota) renderDotaRules();
     if (isPlayoffs) renderPlayoffForecast();
+    if (isWardMap) window.dispatchEvent(new CustomEvent("ward-map:show"));
     if (updateHash) history.replaceState(null, "", `#${view}`);
   }
 
@@ -369,5 +373,5 @@
   $("dota-search").addEventListener("input", event => {dotaState.search = event.target.value; renderDotaRules();});
   render();
   renderDotaFormulaGroups();
-  setView(location.hash === "#dota-rules" ? "dota-rules" : location.hash === "#playoffs" ? "playoffs" : "forecast", false);
+  setView(location.hash === "#ward-map" ? "ward-map" : location.hash === "#dota-rules" ? "dota-rules" : location.hash === "#playoffs" ? "playoffs" : "forecast", false);
 })();

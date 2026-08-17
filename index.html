@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>TI 2026 Fantasy Lab</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -29,6 +30,7 @@
     <button class="mode-button active" data-view="forecast">Прогноз фэнтези</button>
     <button class="mode-button" data-view="playoffs">Прогноз плей‑офф</button>
     <button class="mode-button" data-view="dota-rules">Статистика по правилам Dota</button>
+    <button class="mode-button" data-view="ward-map">Карта вардов</button>
   </nav>
 
   <main class="shell app-view" id="forecast-view">
@@ -262,9 +264,56 @@
     </section>
   </main>
 
+  <main class="shell app-view" id="ward-map-view" hidden>
+    <section class="panel ward-intro">
+      <div>
+        <p class="eyebrow">VISION LAB · TIER-1 2026</p>
+        <h2>Где профессионалы ставят варды</h2>
+        <p>Observer и Sentry по сетке 64 × 64. Частота нормализуется по доступным картам и времени стадии; игроки связаны только через <code>account_id</code>.</p>
+      </div>
+      <div class="ward-scope" id="ward-scope"><span class="ward-loader">Загрузка отдельного набора данных…</span></div>
+    </section>
+
+    <section class="panel ward-controls" aria-label="Фильтры карты вардов">
+      <label><span class="control-label">Игрок</span><select id="ward-player"></select></label>
+      <label><span class="control-label">Сравнить с</span><select id="ward-compare"></select></label>
+      <label><span class="control-label">Команда</span><select id="ward-team"></select></label>
+      <label><span class="control-label">Позиция</span><select id="ward-role"></select></label>
+      <label><span class="control-label">Тип варда</span><select id="ward-type"><option value="all">Observer + Sentry</option><option value="observer">Observer</option><option value="sentry">Sentry</option></select></label>
+      <label><span class="control-label">Стадия</span><select id="ward-stage"></select></label>
+      <label><span class="control-label">Выборка</span><select id="ward-ti"><option value="1">Текущий TI</option><option value="all">Все Tier-1</option></select></label>
+      <label><span class="control-label">Сторона</span><select id="ward-side"><option value="all">Radiant + Dire</option><option value="radiant">Radiant</option><option value="dire">Dire</option></select></label>
+      <label><span class="control-label">Результат</span><select id="ward-result"><option value="all">Все карты</option><option value="win">Победа</option><option value="loss">Поражение</option></select></label>
+      <label><span class="control-label">Патч</span><select id="ward-patch"></select></label>
+      <label><span class="control-label">Режим</span><select id="ward-mode"><option value="heat">Тепловая карта</option><option value="cells">Агрегированные клетки</option></select></label>
+      <label><span class="control-label">Нормализация</span><select id="ward-normalization"><option value="absolute">Абсолютные установки</option><option value="player-map">На одну player-map</option><option value="10-minutes">На 10 игровых минут</option></select></label>
+    </section>
+
+    <div class="ward-filter-chips" id="ward-filter-chips"></div>
+    <section class="notice ward-warning" id="ward-warning" hidden><span class="notice-icon">!</span><p></p></section>
+    <section class="ward-layout">
+      <article class="panel ward-map-panel">
+        <div class="ward-map-frame" id="ward-map-frame">
+          <canvas id="ward-canvas" width="768" height="768" aria-label="Тепловая карта установок вардов"></canvas>
+          <div class="ward-tooltip" id="ward-tooltip" hidden></div>
+          <span class="ward-corner ward-radiant">RADIANT · (0, 1)</span><span class="ward-corner ward-dire">DIRE · (1, 0)</span>
+        </div>
+        <div class="ward-legend"><span><i class="legend-low"></i> реже</span><span><i class="legend-high"></i> чаще</span><span id="ward-scale-label"></span></div>
+        <div class="ward-performance" id="ward-performance" aria-label="Производительность карты"></div>
+      </article>
+      <aside class="ward-stat-grid" id="ward-stats"></aside>
+    </section>
+    <details class="panel methodology ward-methodology">
+      <summary>Как читать карту и знаменатели</summary>
+      <p><strong>Уникальные матчи</strong> считают матч один раз, <strong>player-maps</strong> — каждую пару игрок–матч, <strong>player-minutes</strong> — сумму реально доступного игрового времени игроков. Для 40+ учитываются только матчи длительностью более 40 минут. <code>unknown</code> и варды, дожившие до окончания матча, не входят в destroyed share.</p>
+      <p>Точная карта текущих патчей не публикуется: свободная лицензия на координатно корректный minimap не подтверждена. Вместо потенциально вводящей в заблуждение иллюстрации используется нейтральная координатная сетка. Radiant отмечен снизу слева, Dire — сверху справа.</p>
+    </details>
+  </main>
+
   <footer class="shell">TI 2026 Fantasy Lab · локальный аналитический dashboard</footer>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
+  <script src="ward-map.js"></script>
 </body>
 </html>
