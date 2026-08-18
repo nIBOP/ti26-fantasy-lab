@@ -285,7 +285,7 @@
       <label><span class="control-label">Сторона</span><select id="ward-side"><option value="all">Radiant + Dire</option><option value="radiant">Radiant</option><option value="dire">Dire</option></select></label>
       <label><span class="control-label">Результат</span><select id="ward-result"><option value="all">Все карты</option><option value="win">Победа</option><option value="loss">Поражение</option></select></label>
       <label><span class="control-label">Патч</span><select id="ward-patch"></select></label>
-      <label><span class="control-label">Режим</span><select id="ward-mode"><option value="heat">Тепловая карта</option><option value="cells">Агрегированные клетки</option></select></label>
+      <label><span class="control-label">Режим</span><select id="ward-mode"><option value="heat">Тепловая карта</option><option value="points">Интересные точки</option><option value="cells">Агрегированные клетки</option></select></label>
       <label><span class="control-label">Нормализация</span><select id="ward-normalization"><option value="absolute">Абсолютные установки</option><option value="player-map">На одну player-map</option><option value="10-minutes">На 10 игровых минут</option></select></label>
     </section>
 
@@ -294,11 +294,12 @@
     <section class="ward-layout">
       <article class="panel ward-map-panel">
         <div class="ward-map-frame" id="ward-map-frame">
-          <canvas id="ward-canvas" width="768" height="768" aria-label="Тепловая карта установок вардов"></canvas>
+          <canvas id="ward-canvas" width="768" height="768" aria-label="Карта установок вардов"></canvas>
           <div class="ward-tooltip" id="ward-tooltip" hidden></div>
           <span class="ward-corner ward-radiant">RADIANT · (0, 1)</span><span class="ward-corner ward-dire">DIRE · (1, 0)</span>
         </div>
-        <div class="ward-legend"><span><i class="legend-low"></i> реже</span><span><i class="legend-high"></i> чаще</span><span id="ward-scale-label"></span></div>
+        <p class="ward-map-source" id="ward-map-source">Подложка загружается…</p>
+        <div class="ward-legend"><span><i class="legend-low"></i> <span id="ward-legend-low-label">реже</span></span><span><i class="legend-high"></i> <span id="ward-legend-high-label">чаще</span></span><span id="ward-scale-label"></span></div>
         <div class="ward-performance" id="ward-performance" aria-label="Производительность карты"></div>
       </article>
       <aside class="ward-stat-grid" id="ward-stats"></aside>
@@ -306,7 +307,8 @@
     <details class="panel methodology ward-methodology">
       <summary>Как читать карту и знаменатели</summary>
       <p><strong>Уникальные матчи</strong> считают матч один раз, <strong>player-maps</strong> — каждую пару игрок–матч, <strong>player-minutes</strong> — сумму реально доступного игрового времени игроков. Для 40+ учитываются только матчи длительностью более 40 минут. <code>unknown</code> и варды, дожившие до окончания матча, не входят в destroyed share.</p>
-      <p>Точная карта текущих патчей не публикуется: свободная лицензия на координатно корректный minimap не подтверждена. Вместо потенциально вводящей в заблуждение иллюстрации используется нейтральная координатная сетка. Radiant отмечен снизу слева, Dire — сверху справа.</p>
+      <p><strong>Интересные точки</strong> — устойчивые локальные максимумы, а не отдельные установки. Кандидат должен повторяться в нескольких матчах и player-maps, превосходить окружающее кольцо по плотности и находиться достаточно далеко от уже выбранной точки. Наведение показывает объём, поддержку и локальную концентрацию. Это показатель популярности и устойчивости места, но не доказательство его эффективности.</p>
+      <p>Подложка выбирается по патчу: 7.40 для patch id 59 и 7.41 для patch id 60. При смешанной выборке растровая карта отключается и остаётся координатная сетка. Визуальные материалы Dota 2 принадлежат Valve и используются только как часть некоммерческой аналитической fan-work визуализации; подробности и хеши — в <a href="WARD_MAP_ASSETS.md">WARD_MAP_ASSETS.md</a>. Radiant отмечен снизу слева, Dire — сверху справа.</p>
     </details>
   </main>
 
