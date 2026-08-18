@@ -2,7 +2,8 @@
   "use strict";
 
   const $ = id => document.getElementById(id);
-  const ASSET_VERSION = "20260818-3";
+  const ASSET_VERSION = "20260818-4";
+  const POINT_QUANTIZATION = 65535;
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
@@ -20,9 +21,9 @@
       href: "https://github.com/odota/web/commit/301db7412410550476bc70e983fd91668a6b8e85"
     },
     60: {
-      src: `assets/ward-map-741.png?v=${ASSET_VERSION}`,
+      src: `assets/ward-map-741.webp?v=${ASSET_VERSION}`,
       patch: "7.41",
-      label: "Карта 7.41: Dota 2 client · © Valve",
+      label: "Детальный top-down рендер 7.41: Dota 2 client · © Valve",
       href: "https://store.steampowered.com/subscriber_agreement/#2"
     }
   };
@@ -64,7 +65,7 @@
 
   function init() {
     const data = window.WARD_DATA;
-    if (!data || data.version < 2) throw new Error("ward-data.js must be rebuilt with payload version 2");
+    if (!data || data.version < 3) throw new Error("ward-data.js must be rebuilt with payload version 3");
     prepareMapAssets();
     const playerOptions = data.players.map((player, index) => option(index, `${player[1]} · ${player[2]}`)).join("");
     $("ward-player").innerHTML = option("all", "Все игроки") + playerOptions;
@@ -121,24 +122,45 @@
     renderPerformance();
   }
 
+  function spotTier(zoom = state.zoom) {
+    if (zoom < 1.75) return 1;
+    if (zoom < 3) return 2;
+    return 3;
+  }
+
+  function refreshSpots() {
+    if (state.mode !== "points" || !state.cells) return;
+    const started = performance.now();
+    state.cells.primary.spots = findInterestingSpots(state.cells.primary);
+    if (state.cells.comparison) state.cells.comparison.spots = findInterestingSpots(state.cells.comparison);
+    state.cells.commonSpotMax = Math.max(0, ...state.cells.primary.spots.map(spot => spot.value),
+      ...(state.cells.comparison ? state.cells.comparison.spots.map(spot => spot.value) : []));
+    state.perf.aggregate = performance.now() - started;
+    warnings(state.cells.primary);
+  }
+
   function setZoom(nextZoom, anchorX = 0.5, anchorY = 0.5) {
     const oldZoom = state.zoom;
     const zoom = Math.max(1, Math.min(4, nextZoom));
     if (Math.abs(zoom - oldZoom) < 0.001) return;
     const worldX = state.panX + (anchorX - 0.5) / oldZoom;
     const worldY = state.panY + (anchorY - 0.5) / oldZoom;
+    const previousTier = spotTier(oldZoom);
     state.zoom = zoom;
     state.panX = worldX - (anchorX - 0.5) / zoom;
     state.panY = worldY - (anchorY - 0.5) / zoom;
     clampPan();
+    if (spotTier() !== previousTier) refreshSpots();
     updateZoomUi();
     redrawOnly();
   }
 
   function resetZoom() {
+    const previousTier = spotTier();
     state.zoom = 1;
     state.panX = 0.5;
     state.panY = 0.5;
+    if (previousTier !== 1) refreshSpots();
     updateZoomUi();
     redrawOnly();
   }
@@ -253,7 +275,7 @@
 
   function aggregate(filtered) {
     const rawGrid = new Float64Array(4096);
-    const cellSupport = state.mode === "points" ? new Map() : null;
+    const pointRows = state.mode === "points" ? [] : null;
     const lifetimes = [];
     const placementMatches = new Set();
     const uniqueMatches = new Set();
@@ -265,16 +287,10 @@
     for (const row of filtered.bins) {
       const count = row[11];
       rawGrid[row[10] * 64 + row[9]] += count;
-      if (cellSupport) {
-        const cellIndex = row[10] * 64 + row[9];
-        let support = cellSupport.get(cellIndex);
-        if (!support) {
-          support = {matches: new Set(), playerMaps: new Set()};
-          cellSupport.set(cellIndex, support);
-        }
-        support.matches.add(row[0]);
-        support.playerMaps.add(`${row[0]}:${row[1]}`);
-      }
+      if (pointRows) pointRows.push({
+        x: row[16] / POINT_QUANTIZATION, y: row[17] / POINT_QUANTIZATION,
+        count, match: row[0], playerMap: `${row[0]}:${row[1]}`
+      });
       placements += count;
       placementMatches.add(row[0]);
       patches.add(row[8]);
@@ -304,7 +320,7 @@
       rawGrid, placements, placementMatches: placementMatches.size,
       uniqueMatches: uniqueMatches.size, playerMaps: filtered.games.length,
       playerMinutes, median, destroyed, classified, survived,
-      unknown: placements - classified - survived, patches, cellSupport
+      unknown: placements - classified - survived, patches, pointRows
     };
   }
 
@@ -328,29 +344,53 @@
     return maximum;
   }
 
+  function spotProfile() {
+    const tier = spotTier();
+    if (tier === 1) return {tier, resolution: 64, localRadius: 1, ringRadius: 4, nms: 4, limit: 12};
+    if (tier === 2) return {tier, resolution: 128, localRadius: 2, ringRadius: 6, nms: 5, limit: 24};
+    return {tier, resolution: 256, localRadius: 2, ringRadius: 8, nms: 6, limit: 40};
+  }
+
   function findInterestingSpots(result) {
-    if (!result.cellSupport || !result.placements || !result.playerMaps) return [];
-    const localMass = new Float64Array(4096);
+    if (!result.pointRows || !result.placements || !result.playerMaps) return [];
+    const profile = spotProfile();
+    const resolution = profile.resolution;
+    const grid = new Float64Array(resolution * resolution);
+    const supportByCell = new Map();
+    for (const row of result.pointRows) {
+      const x = Math.min(resolution - 1, Math.floor(row.x * resolution));
+      const y = Math.min(resolution - 1, Math.floor(row.y * resolution));
+      const index = y * resolution + x;
+      grid[index] += row.count;
+      let support = supportByCell.get(index);
+      if (!support) {
+        support = {matches: new Set(), playerMaps: new Set()};
+        supportByCell.set(index, support);
+      }
+      support.matches.add(row.match);
+      support.playerMaps.add(row.playerMap);
+    }
+    const localMass = new Float64Array(resolution * resolution);
     const cellsIn = (cx, cy, radius, callback) => {
-      for (let y = Math.max(0, cy - radius); y <= Math.min(63, cy + radius); y++) {
-        for (let x = Math.max(0, cx - radius); x <= Math.min(63, cx + radius); x++) callback(x, y, y * 64 + x);
+      for (let y = Math.max(0, cy - radius); y <= Math.min(resolution - 1, cy + radius); y++) {
+        for (let x = Math.max(0, cx - radius); x <= Math.min(resolution - 1, cx + radius); x++) callback(x, y, y * resolution + x);
       }
     };
-    for (let index = 0; index < 4096; index++) {
-      const cx = index % 64;
-      const cy = Math.floor(index / 64);
-      cellsIn(cx, cy, 1, (_x, _y, nearby) => localMass[index] += result.rawGrid[nearby]);
+    for (let index = 0; index < localMass.length; index++) {
+      const cx = index % resolution;
+      const cy = Math.floor(index / resolution);
+      cellsIn(cx, cy, profile.localRadius, (_x, _y, nearby) => localMass[index] += grid[nearby]);
     }
     const minimumMatches = Math.min(8, Math.max(2, Math.ceil(result.uniqueMatches * 0.01)));
     const minimumPlayerMaps = Math.min(12, Math.max(2, Math.ceil(result.playerMaps * 0.01)));
     const divisor = normalizationDivisor(result) || 1;
     const candidates = [];
-    for (let index = 0; index < 4096; index++) {
+    for (let index = 0; index < localMass.length; index++) {
       if (!localMass[index]) continue;
-      const cx = index % 64;
-      const cy = Math.floor(index / 64);
+      const cx = index % resolution;
+      const cy = Math.floor(index / resolution);
       let localMaximum = true;
-      cellsIn(cx, cy, 1, (_x, _y, nearby) => {
+      cellsIn(cx, cy, profile.localRadius, (_x, _y, nearby) => {
         if (nearby !== index && (localMass[nearby] > localMass[index] ||
           (localMass[nearby] === localMass[index] && nearby < index))) localMaximum = false;
       });
@@ -361,12 +401,12 @@
       let weightedX = 0;
       let weightedY = 0;
       let localCellCount = 0;
-      cellsIn(cx, cy, 1, (x, y, nearby) => {
+      cellsIn(cx, cy, profile.localRadius, (x, y, nearby) => {
         localCellCount++;
-        const count = result.rawGrid[nearby];
+        const count = grid[nearby];
         weightedX += (x + 0.5) * count;
         weightedY += (y + 0.5) * count;
-        const support = result.cellSupport.get(nearby);
+        const support = supportByCell.get(nearby);
         if (support) {
           support.matches.forEach(value => matches.add(value));
           support.playerMaps.forEach(value => playerMaps.add(value));
@@ -376,9 +416,9 @@
 
       let ringMass = 0;
       let ringCells = 0;
-      cellsIn(cx, cy, 4, (x, y, nearby) => {
-        if (Math.max(Math.abs(x - cx), Math.abs(y - cy)) <= 1) return;
-        ringMass += result.rawGrid[nearby];
+      cellsIn(cx, cy, profile.ringRadius, (x, y, nearby) => {
+        if (Math.max(Math.abs(x - cx), Math.abs(y - cy)) <= profile.localRadius) return;
+        ringMass += grid[nearby];
         ringCells++;
       });
       const localDensity = localMass[index] / localCellCount;
@@ -387,7 +427,7 @@
       if (lift < 1.15) continue;
       const score = localMass[index] * Math.log2(2 + playerMaps.size) * Math.sqrt(lift);
       candidates.push({
-        x: weightedX / localMass[index], y: weightedY / localMass[index],
+        x: weightedX / localMass[index] / resolution, y: weightedY / localMass[index] / resolution,
         placements: localMass[index], value: localMass[index] / divisor,
         matches: matches.size, playerMaps: playerMaps.size,
         usageShare: playerMaps.size / result.playerMaps, lift, score
@@ -396,13 +436,21 @@
     candidates.sort((a, b) => b.score - a.score || b.placements - a.placements);
     const selected = [];
     for (const candidate of candidates) {
-      if (selected.some(spot => (spot.x - candidate.x) ** 2 + (spot.y - candidate.y) ** 2 < 16)) continue;
+      if (selected.some(spot => Math.hypot(spot.x - candidate.x, spot.y - candidate.y) < profile.nms / resolution)) continue;
       selected.push(candidate);
-      if (selected.length === 12) break;
+      if (selected.length === profile.limit) break;
     }
-    selected.forEach((spot, index) => spot.rank = index + 1);
+    selected.forEach((spot, index) => {
+      spot.rank = index + 1;
+      spot.detailTier = profile.tier;
+      spot.resolution = resolution;
+      spot.neighborhood = profile.localRadius * 2 + 1;
+    });
     selected.minimumMatches = minimumMatches;
     selected.minimumPlayerMaps = minimumPlayerMaps;
+    selected.detailTier = profile.tier;
+    selected.resolution = resolution;
+    selected.neighborhood = profile.localRadius * 2 + 1;
     return selected;
   }
 
@@ -458,6 +506,7 @@
     const asset = state.cells?.mapPatch ? mapAssets[state.cells.mapPatch] : null;
     const image = asset ? mapImages.get(state.cells.mapPatch) : null;
     const hasMap = Boolean(image?.complete && image.naturalWidth && image.dataset.failed !== "1");
+    $("ward-canvas").dataset.mapNaturalWidth = String(hasMap ? image.naturalWidth : 0);
     if (hasMap) {
       context.save();
       context.globalAlpha = 0.72;
@@ -551,8 +600,8 @@
     const renderSpots = (spots, fill, stroke, prefix) => {
       for (const spot of spots) {
         const ratioToMax = state.cells.commonSpotMax ? spot.value / state.cells.commonSpotMax : 0;
-        const x = spot.x * cell;
-        const y = spot.y * cell;
+        const x = spot.x * size;
+        const y = spot.y * size;
         const radius = Math.max(6, cell * (0.55 + 0.7 * Math.sqrt(ratioToMax)));
         context.save();
         context.shadowColor = stroke;
@@ -580,7 +629,7 @@
       $("ward-legend-high-label").textContent = "больше поддержка";
       const threshold = state.cells.primary.spots;
       $("ward-scale-label").textContent =
-        `${state.cells.primary.spots.length} точек · минимум ${threshold.minimumPlayerMaps || 2} player-maps и ${threshold.minimumMatches || 2} матчей · единая шкала размера`;
+        `${state.cells.primary.spots.length} точек · детализация ${threshold.detailTier || 1}/3 (${threshold.resolution || 64}×${threshold.resolution || 64}) · минимум ${threshold.minimumPlayerMaps || 2} player-maps и ${threshold.minimumMatches || 2} матчей`;
     } else {
       renderGrid(state.cells.primary.grid, alpha => `rgba(255,96,58,${alpha})`, state.cells.commonMax);
       if (state.cells.comparison) {
@@ -597,6 +646,8 @@
     canvas.dataset.primarySpots = String(state.cells.primary.spots.length);
     canvas.dataset.comparisonSpots = String(state.cells.comparison ? state.cells.comparison.spots.length : 0);
     canvas.dataset.spotScaleMax = String(state.cells.commonSpotMax);
+    canvas.dataset.spotDetailTier = String(state.cells.primary.spots.detailTier || 1);
+    canvas.dataset.spotResolution = String(state.cells.primary.spots.resolution || 64);
     canvas.dataset.primarySpotMax = String(Math.max(0, ...state.cells.primary.spots.map(spot => spot.value)));
     canvas.dataset.comparisonSpotMax = String(Math.max(0, ...(state.cells.comparison ? state.cells.comparison.spots.map(spot => spot.value) : [])));
     canvas.dataset.zoom = String(state.zoom);
@@ -686,18 +737,20 @@
         ...state.cells.primary.spots.map(spot => ({...spot, layer: state.cells.comparison ? "A · основной" : "основной"})),
         ...(state.cells.comparison ? state.cells.comparison.spots.map(spot => ({...spot, layer: "B · сравнение"})) : [])
       ];
-      const nearest = layers.map(spot => ({spot, distance: Math.hypot(spot.x - exactX, spot.y - exactY)}))
+      const normalizedX = exactX / 64;
+      const normalizedY = exactY / 64;
+      const nearest = layers.map(spot => ({spot, distance: Math.hypot(spot.x - normalizedX, spot.y - normalizedY)}))
         .sort((a, b) => a.distance - b.distance)[0];
-      if (!nearest || nearest.distance > 2.8) {
+      if (!nearest || nearest.distance > 2.8 / 64) {
         tip.hidden = true;
         return;
       }
       const spot = nearest.spot;
-      const worldX = 64 + spot.x * 2;
-      const worldY = 64 + (64 - spot.y) * 2;
+      const worldX = 64 + spot.x * 128;
+      const worldY = 64 + (1 - spot.y) * 128;
       tip.hidden = false;
       tip.innerHTML = `<strong>${esc(spot.layer)} · точка ${spot.rank}</strong><br>` +
-        `${spot.placements} установок в окрестности 3×3<br>` +
+        `${spot.placements} установок в окрестности ${spot.neighborhood || 3}×${spot.neighborhood || 3}<br>` +
         `${spot.playerMaps} player-maps (${formatValue(spot.usageShare * 100, 1)}%) · ${spot.matches} матчей<br>` +
         `локальная концентрация ×${formatValue(spot.lift, 2)} · координаты ≈ ${formatValue(worldX, 1)}, ${formatValue(worldY, 1)}`;
       tip.style.left = Math.min(rect.width - 230, event.clientX - rect.left + 12) + "px";

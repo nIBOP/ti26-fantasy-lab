@@ -15,10 +15,12 @@ The OpenDota license covers its repository contribution. Dota 2 visual content a
 
 ## Patch 7.41 / OpenDota patch id 60
 
-- Source: installed Dota 2 client, `game/dota/pak01_dir.vpk`, resource `panorama/images/minimap/dotamap_psd.vtex_c`.
-- Reproducible extraction: [ValveResourceFormat](https://github.com/ValveResourceFormat/ValveResourceFormat) 20.0, `Source2Viewer-CLI.exe -i pak01_dir.vpk -o <output> -d -f panorama/images/minimap/dotamap_psd.vtex_c`.
-- Local file: `assets/ward-map-741.png`, 320 × 320 px.
-- SHA-256: `43eaebcfafa245c1581df0044c1dc8a3527a26390d6da9561503a455dc2c406e`.
+- Source: compiled `maps/dota.vpk` scene from the installed Dota 2 7.41 client.
+- Reproducible extraction/render: [ValveResourceFormat](https://github.com/ValveResourceFormat/ValveResourceFormat) 20.0 decodes the scene to GLB; Blender 5.2 renders it orthographically using the client map's own `dota_minimap_boundary` entities (`-9472,-9472` to `9472,9472`). This is a full terrain render, not the 320 × 320 HUD minimap.
+- Local file: `assets/ward-map-741.webp`, 3072 × 3072 px.
+- SHA-256: `dddeaa7a5faf688d480098bddd7c4fd8e4dbd0b14a40cdd311e396ad0ea9037b`.
+
+The extraction uses `Source2Viewer-CLI.exe -i <dota>/game/dota/maps/dota.vpk -o <output> -d -f maps/dota.vmap_c --gltf_export_format glb --gltf_export_materials --game <dota>/game/dota/gameinfo.gi`. The camera is centred at `(0,0)`, looks down the Z axis and uses orthographic scale `18944 × 0.0254 = 481.1776` metres, matching the two boundary entities. The PNG render is encoded to WebP quality 86; no generative or hand-drawn geometry is used.
 
 ## Rights and use restriction
 
