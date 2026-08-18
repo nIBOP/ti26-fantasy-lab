@@ -58,6 +58,7 @@ h3 { margin-bottom: 8px; }
 .mode-button:hover { color: var(--text); background: rgba(233,184,76,.05); }
 .mode-button.active { color: #1a1409; border-color: var(--gold); background: var(--gold); }
 .dota-rules-mode .hero .active-day, .dota-rules-mode .hero .day-switch, .dota-rules-mode .hero .hero-copy,
+.dota-fantasy-mode .hero .active-day, .dota-fantasy-mode .hero .day-switch, .dota-fantasy-mode .hero .hero-copy,
 .playoffs-mode .hero .active-day, .playoffs-mode .hero .day-switch, .playoffs-mode .hero .hero-copy { display: none; }
 
 .panel { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
@@ -205,26 +206,52 @@ td.player-cell { min-width: 175px; text-align: left; }
 .rank-number { color: var(--gold-soft); font-weight: 800; }
 .value-main { font-weight: 800; }
 .aspect-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; color: #dec990; background: rgba(233,184,76,.09); font-size: 11px; }
-.dota-fantasy-intro { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
-.dota-fantasy-intro > div:first-child { max-width: 780px; }
+.dota-fantasy-intro { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 18px; padding: 26px; }
+.dota-fantasy-intro > div:first-child { width: 100%; max-width: 780px; }
+.dota-fantasy-intro > *, .dota-fantasy-builder-card, .dota-fantasy-tier-grid article { min-width: 0; }
+.dota-fantasy-intro h2, .dota-fantasy-intro p, .dota-fantasy-emblems h2, .dota-fantasy-builder h2 { overflow-wrap: anywhere; }
 .dota-fantasy-emblems { margin-top: 18px; }
-.dota-fantasy-emblem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.dota-fantasy-emblem-grid article { padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
-.dota-fantasy-emblem-grid h3 { margin: 0 0 10px; color: var(--gold); font-size: 14px; }
-.dota-fantasy-emblem-grid article > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.05); }
-.dota-fantasy-emblem-grid span, .dota-fantasy-emblem-grid strong { font-size: 11px; }
-.dota-fantasy-emblem-grid span { color: var(--muted); text-align: right; }
-.dota-fantasy-lineup { margin-bottom: 18px; }
-.dota-fantasy-lineup #dota-fantasy-lineup { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 12px; }
-.dota-fantasy-lineup #dota-fantasy-lineup > div { padding: 13px; border-radius: 10px; background: rgba(233,184,76,.06); }
-.dota-fantasy-lineup #dota-fantasy-lineup > div > span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; margin-bottom: 7px; }
-.dota-fantasy-lineup #dota-fantasy-lineup strong { color: var(--gold); }
-.dota-fantasy-lineup #dota-fantasy-lineup strong + span { font-size: 11px; color: var(--muted); }
-.dota-fantasy-breakdown-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.dota-fantasy-breakdown-row span { display: flex; flex-direction: column; gap: 3px; }
-.dota-fantasy-breakdown-row small { color: var(--muted); }
-.dota-fantasy-breakdown-row b { color: var(--gold); }
-@media (max-width: 900px) { .dota-fantasy-emblem-grid, .dota-fantasy-lineup #dota-fantasy-lineup { grid-template-columns: 1fr; } .dota-fantasy-intro { display: block; } }
+.section-copy { color: var(--muted); line-height: 1.55; }
+.dota-fantasy-tier-grid, .dota-fantasy-builder-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dota-fantasy-tier-grid article, .dota-fantasy-builder-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+.dota-fantasy-tier-grid h3, .dota-fantasy-builder-card h3 { margin: 0 0 12px; color: var(--gold); font-size: 14px; }
+.dota-fantasy-tier-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.05); }
+.dota-fantasy-tier-row > b { color: var(--muted); font-size: 10px; }
+.dota-fantasy-tier-row > span { display: flex; flex-direction: column; min-width: 0; }
+.dota-fantasy-tier-row strong { font-size: 11px; }
+.dota-fantasy-tier-row small { color: var(--muted); font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dota-fantasy-tier-row em { color: var(--gold); font-size: 11px; font-style: normal; }
+.dota-fantasy-builder { margin-top: 18px; }
+.dota-fantasy-config { display: grid; gap: 7px; margin-bottom: 16px; }
+.dota-fantasy-config > div { display: grid; grid-template-columns: minmax(0, 1fr) 118px; gap: 7px; }
+.dota-fantasy-config select, .dota-fantasy-config input { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); background: #15120e; }
+.dota-fantasy-config label { position: relative; }
+.dota-fantasy-config label span { position: absolute; right: 7px; top: 9px; color: var(--muted); font-size: 9px; pointer-events: none; }
+.dota-fantasy-config input { padding-right: 58px; }
+.dota-fantasy-custom-head, .dota-fantasy-custom-row { display: grid; grid-template-columns: minmax(120px, 1fr) 54px 54px 54px; gap: 6px; align-items: center; }
+.dota-fantasy-custom-head { padding: 7px 0; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.dota-fantasy-custom-head span:not(:first-child) { text-align: right; }
+.dota-fantasy-custom-row { position: relative; padding: 8px 0 8px 22px; border-top: 1px solid rgba(255,255,255,.05); }
+.dota-fantasy-custom-row > b { position: absolute; left: 0; color: var(--muted); font-size: 9px; }
+.dota-fantasy-custom-row > span { display: flex; flex-direction: column; min-width: 0; }
+.dota-fantasy-custom-row strong { font-size: 11px; }
+.dota-fantasy-custom-row small { color: var(--muted); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dota-fantasy-custom-row em { text-align: right; font-style: normal; font-size: 10px; }
+.dota-fantasy-custom-row em.bonus { color: var(--gold); }
+@media (max-width: 1100px) { .dota-fantasy-tier-grid, .dota-fantasy-builder-grid { grid-template-columns: 1fr; } .dota-fantasy-intro { display: block; } }
+@media (max-width: 700px) {
+  .dota-fantasy-mode { overflow-x: hidden; }
+  .dota-fantasy-mode .shell { width: calc(100vw - 22px); min-width: 0; max-width: calc(100vw - 22px); }
+  .dota-fantasy-mode .app-view, .dota-fantasy-mode .panel { width: 100%; min-width: 0; max-width: 100%; overflow: hidden; }
+  .dota-fantasy-mode .hero-meta { min-width: 0; overflow-wrap: anywhere; }
+  .dota-fantasy-intro { padding: 18px; }
+  .dota-fantasy-intro .rules-scope { width: 100%; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 16px; }
+  .dota-fantasy-intro .rules-scope span { min-width: 0; padding-inline: 5px; }
+  .dota-fantasy-emblems .section-heading, .dota-fantasy-builder .section-heading { width: 100%; padding: 18px; }
+  .dota-fantasy-emblems .section-heading > div, .dota-fantasy-builder .section-heading > div,
+  .dota-fantasy-emblems h2, .dota-fantasy-builder h2 { width: 100%; max-width: 100%; }
+  .dota-fantasy-emblems .section-copy, .dota-fantasy-builder .section-copy { padding-inline: 18px; }
+}
 .sample-low { color: #ef9a6e; }
 
 .player-panel { position: sticky; top: 16px; min-height: 570px; overflow: hidden; }

@@ -273,7 +273,10 @@
   }
 
   const dotaState = {role: "core", metric: "kills", search: ""};
-  const dotaFantasyState = {role: "core", search: "", selected: null};
+  const freshDotaFantasyConfigs = () => Object.fromEntries(Object.entries(data.dotaFantasy.meta.emblems).map(([role, emblems]) => [
+    role, emblems.map(item => ({metric: item.metric, growth: Math.round((Number(item.total_multiplier) - 1) * 100)}))
+  ]));
+  const dotaFantasyState = {configs: freshDotaFantasyConfigs()};
   const dotaRoleNames = {core: "1/3 · Коры", mid: "2 · Мидеры", support: "4/5 · Поддержка"};
   const dotaColorNames = {red: "Красная эмблема", blue: "Синяя эмблема", green: "Зелёная эмблема"};
   const dotaAllowedColors = {core: ["red", "green"], mid: ["red", "blue", "green"], support: ["blue", "green"]};
@@ -291,6 +294,7 @@
     $("dota-rules-view").hidden = !isDota;
     $("ward-map-view").hidden = !isWardMap;
     document.body.classList.toggle("dota-rules-mode", isDota);
+    document.body.classList.toggle("dota-fantasy-mode", isDotaFantasy);
     document.body.classList.toggle("playoffs-mode", isPlayoffs);
     document.body.classList.toggle("ward-map-mode", isWardMap);
     document.querySelectorAll(".mode-button").forEach(button => {
@@ -308,47 +312,57 @@
     const fantasy = data.dotaFantasy;
     if (!fantasy) return;
     const roleNames = {core: "1/3 · Основа", mid: "2 · Центр", support: "4/5 · Поддержка"};
-    $("dota-fantasy-role-tabs").innerHTML = Object.entries(roleNames).map(([role, label]) =>
-      `<button class="position-tab ${role === dotaFantasyState.role ? "active" : ""}" data-dota-fantasy-role="${role}" role="tab">${label}</button>`
-    ).join("");
-    document.querySelectorAll("[data-dota-fantasy-role]").forEach(button => button.addEventListener("click", () => {
-      dotaFantasyState.role = button.dataset.dotaFantasyRole;
-      dotaFantasyState.selected = null;
-      renderDotaFantasy();
-    }));
     const meta = fantasy.meta;
     $("dota-fantasy-scope").innerHTML = `<span><strong>${meta.maps}</strong> карт Tier‑1</span><span><strong>${meta.tiMaps}</strong> карт TI</span><span><strong>${meta.players}</strong> игроков</span>`;
-    $("dota-fantasy-emblems").innerHTML = Object.entries(meta.emblems).map(([role, emblems]) => `<article>
-      <h3>${roleNames[role]}</h3>${emblems.map(item => `<div><strong>${esc(item.name)}</strong><span>${fmt(Number(item.total_multiplier) * 100, 0)}% · ${esc(item.tier)} · ${esc(item.property)}</span></div>`).join("")}
-    </article>`).join("");
-    const lineup = meta.suggestedLineup;
-    const lineupPlayers = role => lineup[role].map(player => `<strong>${esc(player.player_name)}</strong> <span>${esc(player.team)}</span>`).join(" + ");
-    $("dota-fantasy-lineup").innerHTML = `<div><span>Основа</span>${lineupPlayers("core")}</div><div><span>Центр</span>${lineupPlayers("mid")}</div><div><span>Поддержка</span>${lineupPlayers("support")}</div>`;
-    const query = dotaFantasyState.search.trim().toLocaleLowerCase("ru");
-    const rows = fantasy.rankings.filter(row => row.role_group === dotaFantasyState.role && (!query || `${row.player_name} ${row.team}`.toLocaleLowerCase("ru").includes(query)))
-      .sort((a, b) => Number(a.rank) - Number(b.rank));
-    $("dota-fantasy-ranking-title").textContent = roleNames[dotaFantasyState.role];
-    $("dota-fantasy-result-count").textContent = `${rows.length} игроков`;
-    $("dota-fantasy-ranking-body").innerHTML = rows.map(row => `<tr class="${Number(row.account_id) === dotaFantasyState.selected ? "selected" : ""}" data-dota-fantasy-account="${row.account_id}">
-      <td class="rank-number">${row.rank}</td><td class="player-cell"><strong>${esc(row.player_name)}</strong><span>${esc(row.team)} · позиция ${row.position}</span></td>
-      <td>${row.maps}</td><td>${fmt(row.base_mean, 0)}</td><td>+${fmt(row.emblem_bonus_mean, 0)}</td><td class="value-main">${fmt(row.total_mean, 0)}</td><td>${fmt(row.model_score, 0)}</td><td><span class="aspect-badge">${esc(row.best_emblem)} · +${fmt(row.best_emblem_bonus, 0)}</span></td>
-    </tr>`).join("");
-    document.querySelectorAll("[data-dota-fantasy-account]").forEach(row => row.addEventListener("click", () => {
-      dotaFantasyState.selected = Number(row.dataset.dotaFantasyAccount);
+    const playoffTeams = new Set(data.playoffs.scenarios[0].teams.map(item => item.team));
+    const unavailable = new Set(data.dotaRules.meta.unavailableMetrics);
+    const rules = data.dotaRules.meta.rules;
+    const ruleByMetric = new Map(rules.map(rule => [rule.metric, rule]));
+    const playoffMetrics = data.dotaRules.playerMetrics.filter(row => playoffTeams.has(row.team));
+    const metricLookup = new Map(playoffMetrics.map(row => [`${row.account_id}:${row.metric}`, row]));
+    const roleMetricValue = (role, metric) => {
+      const values = playoffMetrics.filter(row => row.role_group === role && row.metric === metric && row.weighted_mean_score != null).map(row => Number(row.weighted_mean_score));
+      return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+    };
+    $("dota-fantasy-emblem-tiers").innerHTML = Object.entries(roleNames).map(([role, label]) => {
+      const ranked = rules.map(rule => ({...rule, value: roleMetricValue(role, rule.metric)})).filter(item => item.value != null).sort((a, b) => b.value - a.value);
+      return `<article><h3>${label}</h3>${ranked.map((item, index) => `<div class="dota-fantasy-tier-row"><b>${index + 1}</b><span><strong>${esc(item.label)}</strong><small>${esc(item.formula)}</small></span><em>+${fmt(item.value, 0)}</em></div>`).join("")}</article>`;
+    }).join("");
+    const roleRanking = role => {
+      const configs = dotaFantasyState.configs[role];
+      const players = fantasy.rankings.filter(row => row.role_group === role && playoffTeams.has(row.team));
+      const scored = players.map(player => {
+        const contributions = configs.map(config => {
+          const metric = metricLookup.get(`${player.account_id}:${config.metric}`);
+          const bonus = metric?.weighted_mean_score != null ? Number(metric.weighted_mean_score) * Number(config.growth) / 100 : 0;
+          return {metric: config.metric, bonus};
+        });
+        const bonus = contributions.reduce((sum, item) => sum + item.bonus, 0);
+        return {...player, customBonus: bonus, customTotal: Number(player.base_mean) + bonus};
+      });
+      const prior = scored.reduce((sum, player) => sum + player.customTotal, 0) / scored.length;
+      scored.forEach(player => { player.customModel = Number(player.reliability) * player.customTotal + (1 - Number(player.reliability)) * prior; });
+      return scored.sort((a, b) => b.customModel - a.customModel);
+    };
+    const optionsFor = (role, ownIndex) => {
+      const selected = new Set(dotaFantasyState.configs[role].map((item, index) => index === ownIndex ? null : item.metric));
+      return rules.map(rule => `<option value="${rule.metric}" ${dotaFantasyState.configs[role][ownIndex].metric === rule.metric ? "selected" : ""} ${selected.has(rule.metric) ? "disabled" : ""}>${esc(rule.label)}${unavailable.has(rule.metric) ? " · нет данных" : ""}</option>`).join("");
+    };
+    $("dota-fantasy-builders").innerHTML = Object.entries(roleNames).map(([role, label]) => {
+      const ranking = roleRanking(role);
+      return `<article class="dota-fantasy-builder-card"><h3>${label}</h3><div class="dota-fantasy-config">${dotaFantasyState.configs[role].map((config, index) => `<div><select data-builder-role="${role}" data-builder-index="${index}">${optionsFor(role, index)}</select><label><input type="number" min="0" max="500" step="10" value="${config.growth}" data-builder-growth-role="${role}" data-builder-growth-index="${index}"><span>% прироста</span></label></div>`).join("")}</div>
+        <div class="dota-fantasy-custom-ranking"><div class="dota-fantasy-custom-head"><span>Игрок</span><span>База</span><span>Бонус</span><span>Итого</span></div>${ranking.map((player, index) => `<div class="dota-fantasy-custom-row"><b>${index + 1}</b><span><strong>${esc(player.player_name)}</strong><small>${esc(player.team)} · поз. ${player.position}</small></span><em>${fmt(player.base_mean, 0)}</em><em class="bonus">+${fmt(player.customBonus, 0)}</em><em>${fmt(player.customTotal, 0)}</em></div>`).join("")}</div></article>`;
+    }).join("");
+    document.querySelectorAll("[data-builder-role]").forEach(select => select.addEventListener("change", () => {
+      dotaFantasyState.configs[select.dataset.builderRole][Number(select.dataset.builderIndex)].metric = select.value;
       renderDotaFantasy();
     }));
-    if (dotaFantasyState.selected != null) {
-      const player = fantasy.rankings.find(row => Number(row.account_id) === dotaFantasyState.selected);
-      $("dota-fantasy-player-empty").hidden = true; $("dota-fantasy-player-content").hidden = false;
-      $("dota-fantasy-player-role").textContent = roleNames[player.role_group].toUpperCase();
-      $("dota-fantasy-player-name").textContent = player.player_name;
-      $("dota-fantasy-player-team").textContent = `${player.team} · ${player.maps} карт`;
-      $("dota-fantasy-breakdown").innerHTML = fantasy.breakdown.filter(item => Number(item.account_id) === dotaFantasyState.selected).map(item => `<div class="dota-fantasy-breakdown-row ${item.covered ? "" : "metric-missing"}">
-        <span><strong>${esc(item.name)}</strong><small>${fmt(Number(item.total_multiplier) * 100, 0)}% · ${esc(item.tier)} · ${esc(item.property)}</small></span><b>${item.covered ? `+${fmt(item.bonus_mean_score, 0)}` : "нет данных"}</b>
-      </div>`).join("");
-    } else {
-      $("dota-fantasy-player-empty").hidden = false; $("dota-fantasy-player-content").hidden = true;
-    }
+    document.querySelectorAll("[data-builder-growth-role]").forEach(input => input.addEventListener("change", () => {
+      const value = Math.max(0, Math.min(500, Number(input.value) || 0));
+      dotaFantasyState.configs[input.dataset.builderGrowthRole][Number(input.dataset.builderGrowthIndex)].growth = value;
+      renderDotaFantasy();
+    }));
+    $("dota-fantasy-reset").onclick = () => { dotaFantasyState.configs = freshDotaFantasyConfigs(); renderDotaFantasy(); };
   }
 
   function renderDotaRoleTabs() {
@@ -422,7 +436,6 @@
   document.querySelectorAll(".mode-button").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
   $("dota-metric-select").addEventListener("change", event => {dotaState.metric = event.target.value; renderDotaRules();});
   $("dota-search").addEventListener("input", event => {dotaState.search = event.target.value; renderDotaRules();});
-  $("dota-fantasy-search").addEventListener("input", event => {dotaFantasyState.search = event.target.value; renderDotaFantasy();});
   render();
   renderDotaFormulaGroups();
   setView(location.hash === "#ward-map" ? "ward-map" : location.hash === "#dota-fantasy" ? "dota-fantasy" : location.hash === "#dota-rules" ? "dota-rules" : location.hash === "#playoffs" ? "playoffs" : "forecast", false);
