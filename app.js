@@ -274,7 +274,7 @@
 
   const dotaState = {role: "core", metric: "kills", search: ""};
   const freshDotaFantasyConfigs = () => Object.fromEntries(Object.entries(data.dotaFantasy.meta.emblems).map(([role, emblems]) => [
-    role, emblems.map(item => ({metric: item.metric, growth: Math.round((Number(item.total_multiplier) - 1) * 100)}))
+    role, emblems.map(item => ({metric: item.metric, growth: Math.round(Number(item.total_multiplier) * 100)}))
   ]));
   const dotaFantasyState = {configs: freshDotaFantasyConfigs()};
   const dotaRoleNames = {core: "1/3 · Коры", mid: "2 · Мидеры", support: "4/5 · Поддержка"};
@@ -340,9 +340,7 @@
         const bonus = contributions.reduce((sum, item) => sum + item.bonus, 0);
         return {...player, customBonus: bonus, customTotal: Number(player.base_mean) + bonus};
       });
-      const prior = scored.reduce((sum, player) => sum + player.customTotal, 0) / scored.length;
-      scored.forEach(player => { player.customModel = Number(player.reliability) * player.customTotal + (1 - Number(player.reliability)) * prior; });
-      return scored.sort((a, b) => b.customModel - a.customModel);
+      return scored.sort((a, b) => b.customTotal - a.customTotal);
     };
     const optionsFor = (role, ownIndex) => {
       const selected = new Set(dotaFantasyState.configs[role].map((item, index) => index === ownIndex ? null : item.metric));
@@ -350,8 +348,21 @@
     };
     $("dota-fantasy-builders").innerHTML = Object.entries(roleNames).map(([role, label]) => {
       const ranking = roleRanking(role);
+      const rankingMarkup = role === "mid"
+        ? `<div class="dota-fantasy-custom-ranking"><div class="dota-fantasy-custom-head"><span>Игрок</span><span>База</span><span>Бонус</span><span>Итого</span></div>${ranking.map((player, index) => `<div class="dota-fantasy-custom-row"><b>${index + 1}</b><span><strong>${esc(player.player_name)}</strong><small>${esc(player.team)} · поз. ${player.position}</small></span><em>${fmt(player.base_mean, 0)}</em><em class="bonus">+${fmt(player.customBonus, 0)}</em><em>${fmt(player.customTotal, 0)}</em></div>`).join("")}</div>`
+        : (() => {
+          const pairs = [];
+          for (let first = 0; first < ranking.length; first += 1) for (let second = first + 1; second < ranking.length; second += 1) {
+            if (ranking[first].team !== ranking[second].team) continue;
+            pairs.push({first: ranking[first], second: ranking[second], total: ranking[first].customTotal + ranking[second].customTotal});
+          }
+          pairs.sort((a, b) => b.total - a.total);
+          const pairRow = (pair, index) => `<div class="dota-fantasy-pair-row"><b>${index + 1}</b><div class="dota-fantasy-pair-players">${[pair.first, pair.second].map(player => `<div><span><strong>${esc(player.player_name)}</strong><small>${esc(player.team)} · поз. ${player.position}</small></span><em>база ${fmt(player.base_mean, 0)} · бонус +${fmt(player.customBonus, 0)} · <strong>${fmt(player.customTotal, 0)}</strong></em></div>`).join("")}</div><div class="dota-fantasy-pair-total"><small>Σ двух игроков</small><strong>${fmt(pair.total, 0)}</strong></div></div>`;
+          const rest = pairs.length > 20 ? `<details class="dota-fantasy-more-pairs"><summary>Показать остальные ${pairs.length - 20} пар</summary>${pairs.slice(20).map((pair, index) => pairRow(pair, index + 20)).join("")}</details>` : "";
+          return `<div class="dota-fantasy-pair-ranking"><div class="dota-fantasy-pair-head"><span>Пара одной команды · ${pairs.length} вариантов</span><span>Сумма двух</span></div>${pairs.slice(0, 20).map(pairRow).join("")}${rest}</div>`;
+        })();
       return `<article class="dota-fantasy-builder-card"><h3>${label}</h3><div class="dota-fantasy-config">${dotaFantasyState.configs[role].map((config, index) => `<div><select data-builder-role="${role}" data-builder-index="${index}">${optionsFor(role, index)}</select><label><input type="number" min="0" max="500" step="10" value="${config.growth}" data-builder-growth-role="${role}" data-builder-growth-index="${index}"><span>% прироста</span></label></div>`).join("")}</div>
-        <div class="dota-fantasy-custom-ranking"><div class="dota-fantasy-custom-head"><span>Игрок</span><span>База</span><span>Бонус</span><span>Итого</span></div>${ranking.map((player, index) => `<div class="dota-fantasy-custom-row"><b>${index + 1}</b><span><strong>${esc(player.player_name)}</strong><small>${esc(player.team)} · поз. ${player.position}</small></span><em>${fmt(player.base_mean, 0)}</em><em class="bonus">+${fmt(player.customBonus, 0)}</em><em>${fmt(player.customTotal, 0)}</em></div>`).join("")}</div></article>`;
+        ${rankingMarkup}</article>`;
     }).join("");
     document.querySelectorAll("[data-builder-role]").forEach(select => select.addEventListener("change", () => {
       dotaFantasyState.configs[select.dataset.builderRole][Number(select.dataset.builderIndex)].metric = select.value;
