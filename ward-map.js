@@ -2,6 +2,7 @@
   "use strict";
 
   const $ = id => document.getElementById(id);
+  const ASSET_VERSION = "20260818-3";
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
@@ -13,13 +14,13 @@
   };
   const mapAssets = {
     59: {
-      src: "assets/ward-map-740.webp",
+      src: `assets/ward-map-740.webp?v=${ASSET_VERSION}`,
       patch: "7.40",
       label: "Карта 7.40: OpenDota · Dota 2 © Valve",
       href: "https://github.com/odota/web/commit/301db7412410550476bc70e983fd91668a6b8e85"
     },
     60: {
-      src: "assets/ward-map-741.png",
+      src: `assets/ward-map-741.png?v=${ASSET_VERSION}`,
       patch: "7.41",
       label: "Карта 7.41: Dota 2 client · © Valve",
       href: "https://store.steampowered.com/subscriber_agreement/#2"
@@ -30,7 +31,7 @@
     loaded: false, loading: false, player: "all", compare: "none", team: "all",
     role: "all", type: "all", stage: "all", ti: "1", side: "all",
     result: "all", patch: "all", mode: "heat", normalization: "absolute",
-    cells: null, loadStarted: 0,
+    cells: null, loadStarted: 0, zoom: 1, panX: 0.5, panY: 0.5, drag: null,
     perf: {load: null, parse: null, filter: null, aggregate: null, draw: null}
   };
 
@@ -43,7 +44,7 @@
     state.loading = true;
     state.loadStarted = performance.now();
     const script = document.createElement("script");
-    const source = new URL("ward-data.js", location.href).href;
+    const source = new URL(`ward-data.js?v=${ASSET_VERSION}`, location.href).href;
     script.src = source;
     script.onload = () => {
       const readyAt = performance.now();
@@ -94,11 +95,95 @@
     });
     $("ward-canvas").addEventListener("mousemove", tooltip);
     $("ward-canvas").addEventListener("mouseleave", () => $("ward-tooltip").hidden = true);
+    initMapNavigation();
     window.addEventListener("resize", () => {
       state.perf.draw = draw();
       renderPerformance();
     });
     render();
+  }
+
+  function clampPan() {
+    const margin = 0.5 / state.zoom;
+    state.panX = Math.max(margin, Math.min(1 - margin, state.panX));
+    state.panY = Math.max(margin, Math.min(1 - margin, state.panY));
+  }
+
+  function updateZoomUi() {
+    $("ward-zoom-level").textContent = `${formatValue(state.zoom, 1)}×`;
+    $("ward-zoom-out").disabled = state.zoom <= 1;
+    $("ward-zoom-in").disabled = state.zoom >= 4;
+    $("ward-map-frame").classList.toggle("is-zoomed", state.zoom > 1);
+  }
+
+  function redrawOnly() {
+    state.perf.draw = draw();
+    renderPerformance();
+  }
+
+  function setZoom(nextZoom, anchorX = 0.5, anchorY = 0.5) {
+    const oldZoom = state.zoom;
+    const zoom = Math.max(1, Math.min(4, nextZoom));
+    if (Math.abs(zoom - oldZoom) < 0.001) return;
+    const worldX = state.panX + (anchorX - 0.5) / oldZoom;
+    const worldY = state.panY + (anchorY - 0.5) / oldZoom;
+    state.zoom = zoom;
+    state.panX = worldX - (anchorX - 0.5) / zoom;
+    state.panY = worldY - (anchorY - 0.5) / zoom;
+    clampPan();
+    updateZoomUi();
+    redrawOnly();
+  }
+
+  function resetZoom() {
+    state.zoom = 1;
+    state.panX = 0.5;
+    state.panY = 0.5;
+    updateZoomUi();
+    redrawOnly();
+  }
+
+  function initMapNavigation() {
+    const canvas = $("ward-canvas");
+    $("ward-zoom-in").addEventListener("click", () => setZoom(state.zoom * 1.5));
+    $("ward-zoom-out").addEventListener("click", () => setZoom(state.zoom / 1.5));
+    $("ward-zoom-reset").addEventListener("click", resetZoom);
+    canvas.addEventListener("wheel", event => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      setZoom(state.zoom * (event.deltaY < 0 ? 1.25 : 0.8),
+        (event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height);
+    }, {passive: false});
+    canvas.addEventListener("dblclick", event => {
+      const rect = canvas.getBoundingClientRect();
+      setZoom(state.zoom * 1.5,
+        (event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height);
+    });
+    canvas.addEventListener("pointerdown", event => {
+      if (state.zoom <= 1 || event.button > 0) return;
+      state.drag = {pointerId: event.pointerId, x: event.clientX, y: event.clientY};
+      canvas.setPointerCapture(event.pointerId);
+      canvas.classList.add("is-panning");
+      $("ward-tooltip").hidden = true;
+    });
+    canvas.addEventListener("pointermove", event => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      const rect = canvas.getBoundingClientRect();
+      state.panX -= (event.clientX - state.drag.x) / rect.width / state.zoom;
+      state.panY -= (event.clientY - state.drag.y) / rect.height / state.zoom;
+      state.drag.x = event.clientX;
+      state.drag.y = event.clientY;
+      clampPan();
+      redrawOnly();
+    });
+    const endDrag = event => {
+      if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+      state.drag = null;
+      canvas.classList.remove("is-panning");
+    };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+    updateZoomUi();
   }
 
   function prepareMapAssets() {
@@ -429,6 +514,12 @@
       canvas.height = size;
     }
     const context = canvas.getContext("2d");
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, size, size);
+    context.save();
+    context.translate(size / 2, size / 2);
+    context.scale(state.zoom, state.zoom);
+    context.translate(-state.panX * size, -state.panY * size);
     const cell = size / 64;
     drawCoordinateBase(context, size);
 
@@ -508,6 +599,10 @@
     canvas.dataset.spotScaleMax = String(state.cells.commonSpotMax);
     canvas.dataset.primarySpotMax = String(Math.max(0, ...state.cells.primary.spots.map(spot => spot.value)));
     canvas.dataset.comparisonSpotMax = String(Math.max(0, ...(state.cells.comparison ? state.cells.comparison.spots.map(spot => spot.value) : [])));
+    canvas.dataset.zoom = String(state.zoom);
+    canvas.dataset.panX = String(state.panX);
+    canvas.dataset.panY = String(state.panY);
+    context.restore();
     return performance.now() - started;
   }
 
@@ -573,8 +668,11 @@
     if (!state.cells) return;
     const canvas = $("ward-canvas");
     const rect = canvas.getBoundingClientRect();
-    const exactX = Math.max(0, Math.min(64, (event.clientX - rect.left) / rect.width * 64));
-    const exactY = Math.max(0, Math.min(64, (event.clientY - rect.top) / rect.height * 64));
+    if (state.drag) return;
+    const screenX = (event.clientX - rect.left) / rect.width;
+    const screenY = (event.clientY - rect.top) / rect.height;
+    const exactX = Math.max(0, Math.min(64, (state.panX + (screenX - 0.5) / state.zoom) * 64));
+    const exactY = Math.max(0, Math.min(64, (state.panY + (screenY - 0.5) / state.zoom) * 64));
     const x = Math.max(0, Math.min(63, Math.floor(exactX)));
     const y = Math.max(0, Math.min(63, Math.floor(exactY)));
     const index = y * 64 + x;

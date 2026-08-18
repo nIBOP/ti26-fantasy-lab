@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark">
   <title>TI 2026 Fantasy Lab</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260818-3">
 </head>
 <body>
   <div class="ambient ambient-a"></div>
@@ -296,6 +296,11 @@
         <div class="ward-map-frame" id="ward-map-frame">
           <canvas id="ward-canvas" width="768" height="768" aria-label="Карта установок вардов"></canvas>
           <div class="ward-tooltip" id="ward-tooltip" hidden></div>
+          <div class="ward-zoom-controls" aria-label="Масштаб карты">
+            <button type="button" id="ward-zoom-out" aria-label="Уменьшить карту">−</button>
+            <button type="button" id="ward-zoom-reset" aria-label="Сбросить масштаб"><span id="ward-zoom-level">1×</span></button>
+            <button type="button" id="ward-zoom-in" aria-label="Увеличить карту">+</button>
+          </div>
           <span class="ward-corner ward-radiant">RADIANT · (0, 1)</span><span class="ward-corner ward-dire">DIRE · (1, 0)</span>
         </div>
         <p class="ward-map-source" id="ward-map-source">Подложка загружается…</p>
@@ -308,6 +313,7 @@
       <summary>Как читать карту и знаменатели</summary>
       <p><strong>Уникальные матчи</strong> считают матч один раз, <strong>player-maps</strong> — каждую пару игрок–матч, <strong>player-minutes</strong> — сумму реально доступного игрового времени игроков. Для 40+ учитываются только матчи длительностью более 40 минут. <code>unknown</code> и варды, дожившие до окончания матча, не входят в destroyed share.</p>
       <p><strong>Интересные точки</strong> — устойчивые локальные максимумы, а не отдельные установки. Кандидат должен повторяться в нескольких матчах и player-maps, превосходить окружающее кольцо по плотности и находиться достаточно далеко от уже выбранной точки. Наведение показывает объём, поддержку и локальную концентрацию. Это показатель популярности и устойчивости места, но не доказательство его эффективности.</p>
+      <p>Карту можно приблизить колёсиком или кнопками до 4× и перетащить мышью либо пальцем. Масштабирование привязано к позиции курсора и не запускает повторную фильтрацию данных.</p>
       <p>Подложка выбирается по патчу: 7.40 для patch id 59 и 7.41 для patch id 60. При смешанной выборке растровая карта отключается и остаётся координатная сетка. Визуальные материалы Dota 2 принадлежат Valve и используются только как часть некоммерческой аналитической fan-work визуализации; подробности и хеши — в <a href="WARD_MAP_ASSETS.md">WARD_MAP_ASSETS.md</a>. Radiant отмечен снизу слева, Dire — сверху справа.</p>
     </details>
   </main>
@@ -316,6 +322,6 @@
 
   <script src="data.js"></script>
   <script src="app.js"></script>
-  <script src="ward-map.js"></script>
+  <script src="ward-map.js?v=20260818-3"></script>
 </body>
 </html>

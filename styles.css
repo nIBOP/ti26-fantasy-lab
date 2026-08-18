@@ -340,7 +340,15 @@ footer { padding: 10px 0 36px; color: #6f675b; text-align: center; font-size: 12
 .ward-map-panel { padding:14px; }
 .ward-map-frame { position:relative; width:100%; max-width:100%; aspect-ratio:1; overflow:hidden; border-radius:14px; background:#0b1211; border:1px solid rgba(255,255,255,.08); }
 .ward-map-frame canvas { position:absolute; inset:0; width:100%; height:100%; }
-.ward-map-frame canvas { z-index:2; cursor:crosshair; }
+.ward-map-frame canvas { z-index:2; cursor:crosshair; touch-action:none; }
+.ward-map-frame canvas.is-panning { cursor:grabbing; }
+.ward-map-frame.is-zoomed .ward-corner { opacity:0; }
+.ward-zoom-controls { position:absolute; z-index:6; right:10px; bottom:10px; display:flex; overflow:hidden; border:1px solid rgba(255,255,255,.18); border-radius:9px; background:rgba(7,12,13,.9); box-shadow:0 7px 24px rgba(0,0,0,.3); }
+.ward-zoom-controls button { display:grid; place-items:center; min-width:34px; height:34px; padding:0 9px; border:0; border-left:1px solid rgba(255,255,255,.12); color:var(--text); background:transparent; font:800 16px system-ui,sans-serif; }
+.ward-zoom-controls button:first-child { border-left:0; }
+.ward-zoom-controls button:hover { background:rgba(255,255,255,.08); }
+.ward-zoom-controls button:disabled { color:#615d55; cursor:default; }
+#ward-zoom-reset { min-width:48px; font-size:11px; }
 .ward-map-source { min-height:18px; margin:9px 3px 2px; color:var(--muted); font-size:10px; line-height:1.45; }
 .ward-map-source a { color:#9ee9da; }
 .ward-corner { position:absolute; z-index:3; font-size:10px; letter-spacing:.16em; font-weight:800; text-shadow:0 1px 5px #000; pointer-events:none; }
