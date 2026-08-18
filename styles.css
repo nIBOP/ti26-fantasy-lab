@@ -205,6 +205,26 @@ td.player-cell { min-width: 175px; text-align: left; }
 .rank-number { color: var(--gold-soft); font-weight: 800; }
 .value-main { font-weight: 800; }
 .aspect-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 999px; color: #dec990; background: rgba(233,184,76,.09); font-size: 11px; }
+.dota-fantasy-intro { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+.dota-fantasy-intro > div:first-child { max-width: 780px; }
+.dota-fantasy-emblems { margin-top: 18px; }
+.dota-fantasy-emblem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dota-fantasy-emblem-grid article { padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
+.dota-fantasy-emblem-grid h3 { margin: 0 0 10px; color: var(--gold); font-size: 14px; }
+.dota-fantasy-emblem-grid article > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.05); }
+.dota-fantasy-emblem-grid span, .dota-fantasy-emblem-grid strong { font-size: 11px; }
+.dota-fantasy-emblem-grid span { color: var(--muted); text-align: right; }
+.dota-fantasy-lineup { margin-bottom: 18px; }
+.dota-fantasy-lineup #dota-fantasy-lineup { display: grid; grid-template-columns: 2fr 1fr 2fr; gap: 12px; }
+.dota-fantasy-lineup #dota-fantasy-lineup > div { padding: 13px; border-radius: 10px; background: rgba(233,184,76,.06); }
+.dota-fantasy-lineup #dota-fantasy-lineup > div > span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; margin-bottom: 7px; }
+.dota-fantasy-lineup #dota-fantasy-lineup strong { color: var(--gold); }
+.dota-fantasy-lineup #dota-fantasy-lineup strong + span { font-size: 11px; color: var(--muted); }
+.dota-fantasy-breakdown-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.dota-fantasy-breakdown-row span { display: flex; flex-direction: column; gap: 3px; }
+.dota-fantasy-breakdown-row small { color: var(--muted); }
+.dota-fantasy-breakdown-row b { color: var(--gold); }
+@media (max-width: 900px) { .dota-fantasy-emblem-grid, .dota-fantasy-lineup #dota-fantasy-lineup { grid-template-columns: 1fr; } .dota-fantasy-intro { display: block; } }
 .sample-low { color: #ef9a6e; }
 
 .player-panel { position: sticky; top: 16px; min-height: 570px; overflow: hidden; }

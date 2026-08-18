@@ -29,6 +29,7 @@
   <nav class="mode-switch shell" aria-label="Разделы Fantasy Lab">
     <button class="mode-button active" data-view="forecast">Прогноз фэнтези</button>
     <button class="mode-button" data-view="playoffs">Прогноз плей‑офф</button>
+    <button class="mode-button" data-view="dota-fantasy">Фэнтези по правилам Dota</button>
     <button class="mode-button" data-view="dota-rules">Статистика по правилам Dota</button>
     <button class="mode-button" data-view="ward-map">Карта вардов</button>
   </nav>
@@ -216,6 +217,48 @@
       </div>
       <div class="uncertainty-note" id="playoff-meta"></div>
     </section>
+  </main>
+
+  <main class="shell app-view" id="dota-fantasy-view" hidden>
+    <section class="panel dota-fantasy-intro">
+      <div>
+        <p class="eyebrow">ОТДЕЛЬНЫЙ РЕЖИМ · КЛАССИЧЕСКАЯ ШКАЛА DOTA</p>
+        <h2>Фэнтези с новым комплектом эмблем</h2>
+        <p>Это отдельный расчёт, не связанный с прогнозом игрового дня. Каждый игрок получает базовые очки по всем доступным показателям классических правил Dota, после чего к ним добавляются бонусы всех пяти эмблем его категории.</p>
+      </div>
+      <div class="rules-scope" id="dota-fantasy-scope"></div>
+    </section>
+
+    <section class="panel dota-fantasy-emblems">
+      <div class="section-heading"><div><p class="eyebrow">АКТИВНЫЙ НАБОР</p><h2>Какие эмблемы применены</h2></div><span class="model-chip">220% = итог ×2,20</span></div>
+      <div class="dota-fantasy-emblem-grid" id="dota-fantasy-emblems"></div>
+    </section>
+
+    <section class="controls panel">
+      <div><span class="control-label">Категория</span><div class="position-tabs" id="dota-fantasy-role-tabs" role="tablist"></div></div>
+      <label class="search-field"><span class="control-label">Игрок или команда</span><input id="dota-fantasy-search" type="search" placeholder="Например, Yatoro или Spirit" autocomplete="off"></label>
+    </section>
+
+    <section class="panel dota-fantasy-lineup">
+      <div class="section-heading"><div><p class="eyebrow">ПО ТЕКУЩЕЙ СТАТИСТИКЕ</p><h2>Лучшая пятёрка без привязки к матчам дня</h2></div></div>
+      <div id="dota-fantasy-lineup"></div>
+    </section>
+
+    <section class="dota-rules-layout">
+      <article class="panel dota-ranking-panel">
+        <div class="section-heading"><div><p class="eyebrow">ОБЩИЕ ОЧКИ</p><h2 id="dota-fantasy-ranking-title">—</h2></div><span class="result-count" id="dota-fantasy-result-count">—</span></div>
+        <div class="table-wrap"><table class="dota-table">
+          <thead><tr><th>#</th><th>Игрок</th><th>Карт</th><th>База всех показателей</th><th>Бонус 5 эмблем</th><th>Итого</th><th>Надёжный рейтинг</th><th>Главный бонус</th></tr></thead>
+          <tbody id="dota-fantasy-ranking-body"></tbody>
+        </table></div>
+      </article>
+      <aside class="panel formula-panel dota-fantasy-player">
+        <div id="dota-fantasy-player-empty"><p class="eyebrow">РАЗБОР ИГРОКА</p><h2>Выберите строку</h2><p>Здесь появится вклад каждой из пяти эмблем.</p></div>
+        <div id="dota-fantasy-player-content" hidden><p class="eyebrow" id="dota-fantasy-player-role">—</p><h2 id="dota-fantasy-player-name">—</h2><p id="dota-fantasy-player-team">—</p><div id="dota-fantasy-breakdown"></div></div>
+      </aside>
+    </section>
+
+    <section class="notice dota-rules-note"><span class="notice-icon">!</span><p><strong>Ограничение:</strong> подбор безумрудов пока не имеет надёжного источника, поэтому эмблема мидера показана как непокрытая и не добавляет очков. Это не нулевое значение игрока, а отсутствующие данные.</p></section>
   </main>
 
   <main class="shell app-view" id="dota-rules-view" hidden>
