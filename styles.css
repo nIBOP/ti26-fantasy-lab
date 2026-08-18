@@ -216,10 +216,16 @@ td.player-cell { min-width: 175px; text-align: left; }
 .dota-fantasy-builder-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .dota-fantasy-tier-grid article, .dota-fantasy-builder-card { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); }
 .dota-fantasy-tier-grid h3, .dota-fantasy-builder-card h3 { margin: 0 0 12px; color: var(--gold); font-size: 14px; }
+.dota-fantasy-tier-color { margin-top: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; }
+.dota-fantasy-tier-color h4 { margin: 0; padding: 8px 10px; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; background: rgba(255,255,255,.035); }
+.dota-fantasy-tier-color.formula-red h4 { color: var(--red); }
+.dota-fantasy-tier-color.formula-blue h4 { color: var(--blue); }
+.dota-fantasy-tier-color.formula-green h4 { color: var(--green); }
 .dota-fantasy-tier-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.05); }
 .dota-fantasy-tier-row > b { color: var(--muted); font-size: 10px; }
 .dota-fantasy-tier-row > span { display: flex; flex-direction: column; min-width: 0; }
 .dota-fantasy-tier-row strong { font-size: 11px; }
+.dota-fantasy-tier-row strong i { margin-left: 4px; padding: 2px 5px; border-radius: 999px; color: var(--blue); background: rgba(94,184,239,.1); font-size: 8px; font-style: normal; font-weight: 800; }
 .dota-fantasy-tier-row small { color: var(--muted); font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dota-fantasy-tier-row em { color: var(--gold); font-size: 11px; font-style: normal; }
 .dota-fantasy-builder { margin-top: 18px; }
@@ -255,6 +261,61 @@ td.player-cell { min-width: 175px; text-align: left; }
 .dota-fantasy-pair-total small { color: var(--muted); font-size: 9px; }
 .dota-fantasy-pair-total strong { color: var(--gold); font-size: 16px; }
 .dota-fantasy-more-pairs summary { margin-top: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 9px; color: var(--gold); text-align: center; cursor: pointer; }
+.special-emblems { margin-top: 18px; overflow: hidden; }
+.special-emblems > .section-copy { padding: 18px 24px 0; }
+.special-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 18px 24px; }
+.special-stat { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: rgba(0,0,0,.13); }
+.special-stat strong, .special-stat span { display: block; }
+.special-stat strong { color: var(--gold-soft); font: 700 24px Georgia, serif; }
+.special-stat span { color: var(--muted); font-size: 10px; }
+.special-stat.estimate { border-color: rgba(94,184,239,.25); }
+.special-stat.estimate strong { color: var(--blue); }
+.special-stat.observed { border-color: rgba(99,194,140,.22); }
+.special-stat.observed strong { color: var(--green); }
+.special-emblem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 24px 22px; }
+.special-emblem-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(0,0,0,.12); }
+.special-blue { border-color: rgba(94,184,239,.22); }
+.special-green { border-color: rgba(99,194,140,.22); }
+.special-card-heading { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 16px; border-bottom: 1px solid var(--line); }
+.special-card-heading span { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.special-card-heading h3 { margin: 3px 0 0; font: 700 20px Georgia, serif; }
+.special-card-heading > strong { font-size: 11px; white-space: nowrap; }
+.special-blue .special-card-heading > strong { color: var(--blue); }
+.special-green .special-card-heading > strong { color: var(--green); }
+.special-table-wrap { overflow-x: auto; }
+.special-table { font-size: 11px; }
+.special-table th, .special-table td { padding: 9px 11px; }
+.special-table th:first-child, .special-table td:first-child { text-align: left; }
+.special-table tbody tr { cursor: default; }
+.special-blue .special-table td strong { color: var(--blue); }
+.special-green .special-table td strong { color: var(--green); }
+.special-pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 14px 4px; }
+.special-pairs > div { padding: 10px; border-radius: 9px; background: rgba(94,184,239,.07); }
+.special-pairs span, .special-pairs strong, .special-pairs small { display: block; }
+.special-pairs span, .special-pairs small { color: var(--muted); font-size: 9px; }
+.special-pairs strong { color: var(--blue); font-size: 18px; }
+.special-caveat { margin: 12px 14px 15px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.special-caveat strong { color: var(--text); }
+.duration-bands { padding: 12px 14px 2px; }
+.duration-bands h4 { margin: 0 0 8px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.duration-bands > div { display: grid; grid-template-columns: 95px minmax(80px, 1fr) 34px; gap: 9px; align-items: center; padding: 5px 0; }
+.duration-bands span { font-size: 10px; }
+.duration-bands span small { color: var(--muted); }
+.duration-bands i { height: 6px; overflow: hidden; border-radius: 99px; background: #15130f; }
+.duration-bands i b { display: block; height: 100%; border-radius: inherit; background: var(--green); }
+.duration-bands > div > strong { color: var(--green); text-align: right; font-size: 10px; }
+.special-rankings { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.special-rankings > article { min-width: 0; padding: 20px 24px 24px; }
+.special-rankings > article + article { border-left: 1px solid var(--line); }
+.special-rankings h3 { font: 700 18px Georgia, serif; }
+.special-ranking-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) 58px; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(255,255,255,.05); }
+.special-ranking-row > b { color: var(--muted); font-size: 10px; }
+.special-ranking-row span { min-width: 0; }
+.special-ranking-row span strong, .special-ranking-row span small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.special-ranking-row span strong { font-size: 11px; }
+.special-ranking-row span small { color: var(--muted); font-size: 9px; }
+.special-ranking-row em { color: var(--green); text-align: right; font-style: normal; font-weight: 800; }
+.formula-estimated small { color: var(--blue) !important; }
 @media (max-width: 1100px) { .dota-fantasy-tier-grid, .dota-fantasy-builder-grid { grid-template-columns: 1fr; } .dota-fantasy-intro { display: block; } }
 @media (max-width: 700px) {
   .dota-fantasy-mode { overflow-x: hidden; }
@@ -277,6 +338,13 @@ td.player-cell { min-width: 175px; text-align: left; }
   .dota-fantasy-pair-players > div:last-child { margin: -1px 0 0; border-radius: 0 0 9px 9px; }
   .dota-fantasy-pair-players > div { display: block; }
   .dota-fantasy-pair-players em { display: block; margin-top: 5px; text-align: left; white-space: normal; }
+  .special-emblems > .section-copy { padding-inline: 18px; }
+  .special-summary { grid-template-columns: 1fr 1fr; padding: 16px 18px; }
+  .special-emblem-grid, .special-rankings { grid-template-columns: 1fr; }
+  .special-emblem-grid { padding: 0 18px 18px; }
+  .special-rankings > article { padding: 18px; }
+  .special-rankings > article + article { border-left: 0; border-top: 1px solid var(--line); }
+  .special-card-heading { align-items: flex-start; }
 }
 .sample-low { color: #ef9a6e; }
 

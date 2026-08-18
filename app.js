@@ -316,6 +316,7 @@
     $("dota-fantasy-scope").innerHTML = `<span><strong>${meta.maps}</strong> карт Tier‑1</span><span><strong>${meta.tiMaps}</strong> карт TI</span><span><strong>${meta.players}</strong> игроков</span>`;
     const playoffTeams = new Set(data.playoffs.scenarios[0].teams.map(item => item.team));
     const unavailable = new Set(data.dotaRules.meta.unavailableMetrics);
+    const estimated = new Set(data.dotaRules.meta.estimatedMetrics || []);
     const rules = data.dotaRules.meta.rules;
     const ruleByMetric = new Map(rules.map(rule => [rule.metric, rule]));
     const playoffMetrics = data.dotaRules.playerMetrics.filter(row => playoffTeams.has(row.team));
@@ -325,9 +326,13 @@
       return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
     };
     $("dota-fantasy-emblem-tiers").innerHTML = Object.entries(roleNames).map(([role, label]) => {
-      const ranked = rules.map(rule => ({...rule, value: roleMetricValue(role, rule.metric)})).filter(item => item.value != null).sort((a, b) => b.value - a.value);
-      return `<article><h3>${label}</h3>${ranked.map((item, index) => `<div class="dota-fantasy-tier-row"><b>${index + 1}</b><span><strong>${esc(item.label)}</strong><small>${esc(item.formula)}</small></span><em>+${fmt(item.value, 0)}</em></div>`).join("")}</article>`;
+      const colorGroups = dotaAllowedColors[role].map(color => {
+        const ranked = rules.filter(rule => rule.color === color).map(rule => ({...rule, value: roleMetricValue(role, rule.metric)})).filter(item => item.value != null).sort((a, b) => b.value - a.value);
+        return `<section class="dota-fantasy-tier-color formula-${color}"><h4>${esc(dotaColorNames[color])}</h4>${ranked.map((item, index) => `<div class="dota-fantasy-tier-row ${estimated.has(item.metric) ? "tier-estimated" : ""}"><b>${index + 1}</b><span><strong>${esc(item.label)}${estimated.has(item.metric) ? " <i>оценка</i>" : ""}</strong><small>${esc(item.formula)}</small></span><em>${estimated.has(item.metric) ? "≈" : "+"}${fmt(item.value, 0)}</em></div>`).join("")}</section>`;
+      }).join("");
+      return `<article><h3>${label}</h3>${colorGroups}</article>`;
     }).join("");
+    renderSpecialEmblems();
     const roleRanking = role => {
       const configs = dotaFantasyState.configs[role];
       const players = fantasy.rankings.filter(row => row.role_group === role && playoffTeams.has(row.team));
@@ -344,7 +349,7 @@
     };
     const optionsFor = (role, ownIndex) => {
       const selected = new Set(dotaFantasyState.configs[role].map((item, index) => index === ownIndex ? null : item.metric));
-      return rules.map(rule => `<option value="${rule.metric}" ${dotaFantasyState.configs[role][ownIndex].metric === rule.metric ? "selected" : ""} ${selected.has(rule.metric) ? "disabled" : ""}>${esc(rule.label)}${unavailable.has(rule.metric) ? " · нет данных" : ""}</option>`).join("");
+      return rules.map(rule => `<option value="${rule.metric}" ${dotaFantasyState.configs[role][ownIndex].metric === rule.metric ? "selected" : ""} ${selected.has(rule.metric) ? "disabled" : ""}>${esc(rule.label)}${unavailable.has(rule.metric) ? " · нет данных" : estimated.has(rule.metric) ? " · оценка" : ""}</option>`).join("");
     };
     $("dota-fantasy-builders").innerHTML = Object.entries(roleNames).map(([role, label]) => {
       const ranking = roleRanking(role);
@@ -376,6 +381,28 @@
     $("dota-fantasy-reset").onclick = () => { dotaFantasyState.configs = freshDotaFantasyConfigs(); renderDotaFantasy(); };
   }
 
+  function renderSpecialEmblems() {
+    const special = data.dotaRules.specialEmblems;
+    if (!special) return;
+    const watchers = special.watchers;
+    const tormentor = special.tormentor;
+    $("special-emblem-summary").innerHTML = [
+      [watchers.sampleMaps, "карты в пилоте смотрителей", "estimate"],
+      [watchers.samplePlayerMaps, "player-map смотрителей", "estimate"],
+      [tormentor.events, `убийства Терзателя · ${tormentor.tiMaps} карт`, "observed"],
+      [`${fmt(tormentor.mapsWithEventRate * 100, 1)}%`, "карт TI хотя бы с одним Терзателем", "observed"],
+    ].map(([value, label, kind]) => `<div class="special-stat ${kind}"><strong>${value}</strong><span>${label}</span></div>`).join("");
+    $("watcher-position-body").innerHTML = watchers.positions.map(row => `<tr><td>${esc(row.label)}</td><td>≈${fmt(row.estimatedCaptures, 2)}</td><td><strong>≈${fmt(row.estimatedPoints, 0)}</strong></td><td>${fmt(row.lowPoints, 0)}–${fmt(row.highPoints, 0)}</td></tr>`).join("");
+    $("watcher-pairs").innerHTML = watchers.pairs.map(row => `<div><span>${row.role === "core" ? "Два кора" : "Два саппорта"}</span><strong>≈${fmt(row.estimatedPoints, 0)}</strong><small>${fmt(row.lowPoints, 0)}–${fmt(row.highPoints, 0)} очков</small></div>`).join("");
+    $("watcher-method").innerHTML = `${watchers.sampleCaptures} захватов на двух картах (${watchers.matches.map(row => `${fmt(row.durationMinutes, 1)} мин`).join(" и ")}) нормализованы к средней карте TI <strong>${fmt(watchers.targetDurationMinutes, 1)} минуты</strong>. Индивидуальные различия игроков пока не моделируются.`;
+    $("tormentor-position-body").innerHTML = tormentor.positions.map(row => `<tr><td>${esc(row.label)}</td><td>${row.events}</td><td>${fmt(row.hitRate * 100, 1)}%</td><td><strong>${fmt(row.pointsPerMap, 0)}</strong></td></tr>`).join("");
+    const durationMax = Math.max(...tormentor.durationBands.map(row => row.eventsPerMap));
+    $("tormentor-duration-bands").innerHTML = `<h4>Событий на карту по длительности</h4>${tormentor.durationBands.map(row => `<div><span>${esc(row.band)} мин <small>${row.maps} карт</small></span><i><b style="width:${row.eventsPerMap / durationMax * 100}%"></b></i><strong>${fmt(row.eventsPerMap, 2)}</strong></div>`).join("")}`;
+    const supportPairs = tormentor.playoffPairs.filter(row => row.role === "support").sort((a, b) => b.pointsPerMap - a.pointsPerMap);
+    $("tormentor-support-pairs").innerHTML = supportPairs.map((row, index) => `<div class="special-ranking-row"><b>${index + 1}</b><span><strong>${esc(row.team)}</strong><small>${esc(row.players)}</small></span><em>${fmt(row.pointsPerMap, 0)}</em></div>`).join("");
+    $("tormentor-player-top").innerHTML = tormentor.topPlayers.slice(0, 12).map((row, index) => `<div class="special-ranking-row"><b>${index + 1}</b><span><strong>${esc(row.player_name)}</strong><small>${esc(row.team)} · поз. ${row.position} · ${fmt(row.nonzero_rate * 100, 0)}% карт</small></span><em>${fmt(row.weighted_mean_score, 0)}</em></div>`).join("");
+  }
+
   function renderDotaRoleTabs() {
     $("dota-role-tabs").innerHTML = Object.entries(dotaRoleNames).map(([role, label]) =>
       `<button class="position-tab ${role === dotaState.role ? "active" : ""}" data-dota-role="${role}" role="tab">${label}</button>`
@@ -392,18 +419,20 @@
     const rules = data.dotaRules.meta.rules.filter(rule => dotaAllowedColors[dotaState.role].includes(rule.color));
     $("dota-metric-select").innerHTML = rules.map(rule => {
       const unavailable = data.dotaRules.meta.unavailableMetrics.includes(rule.metric);
-      return `<option value="${rule.metric}" ${rule.metric === dotaState.metric ? "selected" : ""} ${unavailable ? "disabled" : ""}>${esc(rule.label)} · ${dotaColorNames[rule.color]}${unavailable ? " · нет данных" : ""}</option>`;
+      const estimated = (data.dotaRules.meta.estimatedMetrics || []).includes(rule.metric);
+      return `<option value="${rule.metric}" ${rule.metric === dotaState.metric ? "selected" : ""} ${unavailable ? "disabled" : ""}>${esc(rule.label)} · ${dotaColorNames[rule.color]}${unavailable ? " · нет данных" : estimated ? " · оценка" : ""}</option>`;
     }).join("");
   }
 
   function renderDotaFormulaGroups() {
     const unavailable = new Set(data.dotaRules.meta.unavailableMetrics);
+    const estimated = new Set(data.dotaRules.meta.estimatedMetrics || []);
     $("dota-formula-groups").innerHTML = ["red", "blue", "green"].map(color => `
       <div class="formula-group formula-${color}">
         <h3>${dotaColorNames[color]}</h3>
         ${data.dotaRules.meta.rules.filter(rule => rule.color === color).map(rule => `
-          <div class="formula-item ${unavailable.has(rule.metric) ? "formula-unavailable" : ""}">
-            <strong>${esc(rule.label)}</strong><span>${esc(rule.formula)}</span>${unavailable.has(rule.metric) ? "<small>нет полного источника</small>" : ""}
+          <div class="formula-item ${unavailable.has(rule.metric) ? "formula-unavailable" : estimated.has(rule.metric) ? "formula-estimated" : ""}">
+            <strong>${esc(rule.label)}</strong><span>${esc(rule.formula)}</span>${unavailable.has(rule.metric) ? "<small>нет полного источника</small>" : estimated.has(rule.metric) ? "<small>позиционная оценка по пилоту</small>" : ""}
           </div>`).join("")}
       </div>`).join("");
   }
@@ -421,13 +450,14 @@
     $("dota-color-label").textContent = dotaColorNames[rule.color].toUpperCase();
     $("dota-ranking-title").textContent = `${rule.label} · ${dotaRoleNames[dotaState.role]}`;
     $("dota-result-count").textContent = `${rows.length} игроков`;
-    $("dota-metric-summary").innerHTML = `<span>Формула: <strong>${esc(rule.formula)}</strong></span><span>Цвет: <strong class="text-${rule.color}">${dotaColorNames[rule.color]}</strong></span><span>Сортировка: <strong>взвешенное среднее</strong></span>`;
+    const isEstimated = (data.dotaRules.meta.estimatedMetrics || []).includes(rule.metric);
+    $("dota-metric-summary").innerHTML = `<span>Формула: <strong>${esc(rule.formula)}</strong></span><span>Цвет: <strong class="text-${rule.color}">${dotaColorNames[rule.color]}</strong></span><span>Статус: <strong>${isEstimated ? "оценка по позиции" : "фактические события"}</strong></span>`;
     $("dota-ranking-body").innerHTML = rows.map((row, index) => `<tr>
       <td class="rank-number">${index + 1}</td>
       <td class="player-cell"><strong>${esc(row.player_name)}</strong><span>${esc(row.team)} · позиция ${row.position}</span></td>
-      <td>${row.observed_maps}</td><td>${row.ti_maps}</td>
-      <td>${fmt(row.weighted_mean_value)}</td><td class="value-main">${fmt(row.weighted_mean_score, 0)}</td>
-      <td>${fmt(row.weighted_p75_score, 0)}</td><td>${fmt(Number(row.nonzero_rate) * 100, 0)}%</td>
+      <td>${row.is_estimated ? "модель" : row.observed_maps}</td><td>${row.ti_maps}</td>
+      <td>${row.is_estimated ? "≈" : ""}${fmt(row.weighted_mean_value)}</td><td class="value-main">${row.is_estimated ? "≈" : ""}${fmt(row.weighted_mean_score, 0)}</td>
+      <td>${row.is_estimated ? `${fmt(row.estimate_low_score, 0)}–${fmt(row.estimate_high_score, 0)}` : fmt(row.weighted_p75_score, 0)}</td><td>${fmt(Number(row.nonzero_rate) * 100, 0)}%</td>
     </tr>`).join("");
     const meta = data.dotaRules.meta;
     const slots = dotaState.role === "core" ? "2 красных + 1 зелёная" : dotaState.role === "mid" ? "1 красная + 1 синяя + 1 зелёная" : "2 синих + 1 зелёная";
