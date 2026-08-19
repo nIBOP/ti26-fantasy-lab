@@ -98,7 +98,9 @@
     $("daily-fixtures").hidden = false;
     document.querySelector(".daily-grid").hidden = false;
     if (daily.status === "active") {
-      $("hero-day-copy").textContent = `Прогноз Elimination Round был рассчитан до начала серий на 97 картах TI; для прогноза плей‑офф ниже уже загружено 109 карт.`;
+      $("hero-day-copy").textContent = daily.stage === "main_event"
+        ? `Прогноз первого дня плей‑офф рассчитан по официальной сетке Liquipedia и 109 завершённым картам группового этапа TI.`
+        : `Прогноз рассчитан по официальным парам Liquipedia и завершённым картам текущего TI.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
     if (daily.status === "active_partial") {
