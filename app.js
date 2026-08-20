@@ -99,7 +99,7 @@
     document.querySelector(".daily-grid").hidden = false;
     if (daily.status === "active") {
       $("hero-day-copy").textContent = daily.stage === "main_event"
-        ? `Прогноз первого дня плей‑офф рассчитан по официальной сетке Liquipedia и 109 завершённым картам группового этапа TI.`
+        ? `Прогноз плей‑офф рассчитан по официальной сетке Liquipedia и ${data.meta.tiMaps} завершённым картам текущего TI.`
         : `Прогноз рассчитан по официальным парам Liquipedia и завершённым картам текущего TI.`;
       $("daily-eyebrow").textContent = `ПРОГНОЗ НА АКТИВНЫЙ ИГРОВОЙ ДЕНЬ · ${daily.date.toLocaleUpperCase("ru")}`;
     }
@@ -469,6 +469,7 @@
   $("data-cutoff").textContent = data.meta.dataCutoff;
   $("roster-checked").textContent = data.meta.rosterChecked;
   $("map-count").textContent = Number(data.meta.playerMapObservations).toLocaleString("ru-RU");
+  $("ti-map-count-notice").textContent = Number(data.meta.tiMaps).toLocaleString("ru-RU");
   $("formula-list").innerHTML = formulas.map(f => `<li>${f}</li>`).join("");
   renderPlayoffForecast();
   renderDailyForecast();
